@@ -1,0 +1,37 @@
+# 临(19)·地泽临卦测试 — 俯临万数，SQLite 持久存储
+
+# 开启内存数据库
+震 【地泽临卦】 开库 ":memory:"
+
+# 建表
+震 【地泽临卦】 执行 "CREATE TABLE 道 (id INTEGER PRIMARY KEY, 名 TEXT, 值 INTEGER)"
+震 "建表行数" 【地泽临卦】 执行 "CREATE TABLE IF NOT EXISTS 道 (id INTEGER PRIMARY KEY, 名 TEXT, 值 INTEGER)"
+兑 "建表行数"
+
+# 事务插入
+震 【地泽临卦】 事务
+震 "行1" 【地泽临卦】 执行 "INSERT INTO 道 (名, 值) VALUES ('天', 1)"
+震 "行2" 【地泽临卦】 执行 "INSERT INTO 道 (名, 值) VALUES ('地', 2)"
+震 "行3" 【地泽临卦】 执行 "INSERT INTO 道 (名, 值) VALUES ('人', 3)"
+震 【地泽临卦】 提交
+
+讼 "行1" == 1
+讼 "行2" == 1
+讼 "行3" == 1
+
+# 查询
+震 "结果" 【地泽临卦】 查询 "SELECT 名, 值 FROM 道 ORDER BY id"
+兑 "结果"
+
+# UPDATE
+震 "更新" 【地泽临卦】 执行 "UPDATE 道 SET 值 = 10 WHERE 名 = '天'"
+讼 "更新" == 1
+
+# 再次查询第一行
+震 "天行" 【地泽临卦】 查询 "SELECT 值 FROM 道 WHERE 名 = '天'"
+兑 "天行"
+
+# 关闭数据库
+震 【地泽临卦】 关库
+
+兑 "临卦测试通过"

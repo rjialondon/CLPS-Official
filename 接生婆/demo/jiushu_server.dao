@@ -1,0 +1,100 @@
+# ══════════════════════════════════════════════════════════
+#  姤卦·遇 — 道·码 藏书阁 REST API 服务器
+#
+#  姤(44)：天风姤，柔遇刚。HTTP 服务端等待客户端，
+#          每次连接是一次"遇"，响应后即散，下次再遇。
+#
+#  架构·三才：
+#    地·坤：地泽临卦(19)  — SQLite 书目数据库（全局单例）
+#    天·乾：益卦(42)      — 路由子程序定义
+#    人·震：火水未济卦(64) — 主循环·待请·路由分发·回应
+#
+#  辅助：
+#    山火贲卦(22) — JSON 序列化
+#    雷水解卦(40) — HTTP 请求解析（解请·解分）
+#    离为火卦     — 字符串拼接（拼）
+#
+#  端点：
+#    GET  /health   → 心跳检测
+#    GET  /books    → 所有书目 JSON
+#    POST /books    → 新增书（body: title\nauthor\nyear）
+# ══════════════════════════════════════════════════════════
+
+# ━━ 地·坤：建库·播种五典 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+震 【地泽临卦】 开库 ":memory:"
+震 【地泽临卦】 执行 "CREATE TABLE books (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, author TEXT, year INTEGER);"
+震 【地泽临卦】 执行 "INSERT INTO books(title,author,year) VALUES('易经','姬昌',1046);"
+震 【地泽临卦】 执行 "INSERT INTO books(title,author,year) VALUES('道德经','老聃',-600);"
+震 【地泽临卦】 执行 "INSERT INTO books(title,author,year) VALUES('论语','孔丘',-479);"
+震 【地泽临卦】 执行 "INSERT INTO books(title,author,year) VALUES('孙子兵法','孙武',-500);"
+震 【地泽临卦】 执行 "INSERT INTO books(title,author,year) VALUES('史记','司马迁',-91);"
+
+兑 "══════════════════════════════"
+兑 "  姤卦·遇 — 藏书阁 API"
+兑 "  端口 8080 · 静候书客"
+兑 "══════════════════════════════"
+
+# ━━ 天·乾：益卦定义路由子程序 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 心跳：GET /health
+益 "路由_健康" {
+    震 【火水未济卦】 回应 "主" 200 "姤·遇，服务正常" "text/plain; charset=utf-8"
+}
+
+# 列书：GET /books
+益 "路由_列书" {
+    震 "捕_rows" 【地泽临卦】 查询 "SELECT id,title,author,year FROM books ORDER BY id;"
+    震 "捕_json" 【山火贲卦】 序列化 捕_rows
+    震 【火水未济卦】 回应 "主" 200 捕_json "application/json; charset=utf-8"
+}
+
+# 增书：POST /books  （body 格式：title\nauthor\nyear）
+益 "路由_增书" "捕_body" {
+    震 "捕_title"  【雷水解卦】 解请 捕_body 0
+    震 "捕_author" 【雷水解卦】 解请 捕_body 1
+    震 "捕_year"   【雷水解卦】 解请 捕_body 2
+    震 "捕_sql" 【离为火卦】 拼 "INSERT INTO books(title,author,year) VALUES('" 捕_title "','" 捕_author "'," 捕_year ");"
+    震 【地泽临卦】 执行 捕_sql
+    震 【火水未济卦】 回应 "主" 201 "{\"status\":\"created\"}" "application/json"
+}
+
+# 404 兜底
+益 "路由_404" "捕_路径" {
+    震 "捕_msg" 【离为火卦】 拼 "未济·路由未匹配: " 捕_路径
+    震 【火水未济卦】 回应 "主" 404 捕_msg "text/plain; charset=utf-8"
+}
+
+# ━━ 人·震：启服·主循环 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+震 【火水未济卦】 启服 "主" 8080
+
+复 9999 {
+    # 姤：等待下一次"遇"
+    震 "请求" 【火水未济卦】 待请 "主"
+
+    # 解析请求三元素（方法·路径·体）
+    # 解余 用于体：保留体内所有换行（体可能是多行 title\nauthor\nyear）
+    震 "方法" 【雷水解卦】 解请 请求 0
+    震 "路径" 【雷水解卦】 解请 请求 1
+    震 "体"   【雷水解卦】 解余 请求 2
+
+    # 路由分发（已处理标志·兜底 404）
+    乾 "已处理" 0 金
+
+    艮 "路径" == "/health" {
+        益 "路由_健康"
+        乾 "已处理" 1 金
+    }
+    艮 "路径" == "/books" {
+        艮 "方法" == "GET" {
+            益 "路由_列书"
+            乾 "已处理" 1 金
+        }
+        艮 "方法" == "POST" {
+            益 "路由_增书" 体
+            乾 "已处理" 1 金
+        }
+    }
+    艮 "已处理" == 0 {
+        益 "路由_404" 路径
+    }
+}

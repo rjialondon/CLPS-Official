@@ -1,0 +1,79 @@
+# 巽(57)·巽为风卦测试 — 数据管道/列表变换
+
+# 先准备测试列表
+震 "nums" 【风山渐卦】 步 1 6
+兑 "nums"
+
+# 取：前3个
+震 "t3" 【巽为风卦】 取 nums 3
+兑 "t3"
+震 "t3_cnt" 【风雷益卦】 个数 t3
+讼 "t3_cnt" == 3
+
+# 跳：跳过前2个 → [3,4,5]
+震 "sk2" 【巽为风卦】 跳 nums 2
+兑 "sk2"
+震 "sk2_cnt" 【风雷益卦】 个数 sk2
+讼 "sk2_cnt" == 3
+
+# 反转
+震 "rev" 【巽为风卦】 反 nums
+兑 "rev"
+震 "rev_cnt" 【风雷益卦】 个数 rev
+讼 "rev_cnt" == 5
+
+# 截 [1,3)
+震 "sl" 【巽为风卦】 截 nums 1 3
+兑 "sl"
+震 "sl_cnt" 【风雷益卦】 个数 sl
+讼 "sl_cnt" == 2
+
+# 合并两个列表
+震 "a" 【风山渐卦】 步 1 4
+震 "b" 【风山渐卦】 步 4 7
+震 "ab" 【巽为风卦】 连 a b
+兑 "ab"
+震 "ab_cnt" 【风雷益卦】 个数 ab
+讼 "ab_cnt" == 6
+
+# 去空
+震 "with_empty" 【地天泰卦】 劈 "a,,b,,c" ","
+兑 "with_empty"
+震 "no_empty" 【巽为风卦】 去空 with_empty
+兑 "no_empty"
+震 "ne_cnt" 【风雷益卦】 个数 no_empty
+讼 "ne_cnt" == 3
+
+# 映加：每个元素+10
+震 "nums2" 【风山渐卦】 步 1 4
+震 "added" 【巽为风卦】 映加 nums2 10
+兑 "added"
+震 "added_cnt" 【风雷益卦】 个数 added
+讼 "added_cnt" == 3
+
+# 映乘：每个元素*2
+震 "nums3" 【风山渐卦】 步 1 4
+震 "mled" 【巽为风卦】 映乘 nums3 2
+兑 "mled"
+讼 "mled" != ""
+
+# 范围滤：只保留 2<=x<=4 的元素
+震 "nums4" 【风山渐卦】 步 1 6
+震 "filtered" 【巽为风卦】 范围滤 nums4 2 4
+兑 "filtered"
+震 "flt_cnt" 【风雷益卦】 个数 filtered
+讼 "flt_cnt" == 3
+
+# 下标枚举
+震 "small" 【风山渐卦】 步 10 13
+震 "enumed" 【巽为风卦】 下标 small
+兑 "enumed"
+讼 "enumed" != ""
+
+# 扁平化
+震 "inner1" 【风山渐卦】 步 1 3
+震 "inner2" 【风山渐卦】 步 3 5
+震 "nested" 【巽为风卦】 连 inner1 inner2
+兑 "nested"
+
+兑 "巽卦测试通过"

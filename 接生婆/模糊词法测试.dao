@@ -1,0 +1,24 @@
+# 模糊词法·近义折叠测试
+# 英文关键字 + 中文近义词，全部应该和标准写法等价
+
+# ── 英文模式 ──
+let "x" 42 int
+let "s" "hello" str
+print "x"
+print "s"
+
+assert "x" == 42
+assert "s" == "hello"
+
+# ── 中文近义词 ──
+存 "y" 100 金
+显 "y"
+验 "y" == 100
+
+# ── 混合（扁平坍缩法：无表达式，c=a+b 需两步）──
+let "a" 1 int
+let "b" 2 int
+let "c" a int
+calc "c" + b
+assert "c" == 3
+print "c"

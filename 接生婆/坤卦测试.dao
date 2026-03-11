@@ -1,0 +1,77 @@
+# 坤(2)·坤为地卦测试 — INI 配置文件读写
+
+# ── 写配：在内存中设置键值 ──────────────────────────────
+震 "r1" 【坤为地卦】 写配 "server.port" "8080"
+兑 "r1"
+讼 "r1" == 1
+
+震 "r2" 【坤为地卦】 写配 "server.host" "localhost"
+讼 "r2" == 1
+
+震 "r3" 【坤为地卦】 写配 "db.name" "taiji.db"
+讼 "r3" == 1
+
+震 "r4" 【坤为地卦】 写配 "db.timeout" "30"
+讼 "r4" == 1
+
+# ── 读配：取回键值 ─────────────────────────────────────
+震 "port" 【坤为地卦】 读配 "server.port"
+兑 "port"
+讼 "port" == "8080"
+
+震 "host" 【坤为地卦】 读配 "server.host"
+兑 "host"
+讼 "host" == "localhost"
+
+震 "dbname" 【坤为地卦】 读配 "db.name"
+兑 "dbname"
+讼 "dbname" == "taiji.db"
+
+# 不存在的键 → 空字符串
+震 "missing" 【坤为地卦】 读配 "no.key"
+兑 "missing"
+讼 "missing" == ""
+
+# ── 列配：枚举所有条目 ────────────────────────────────
+震 "all" 【坤为地卦】 列配
+兑 "all"
+讼 "all" != ""
+
+# ── 存配：写入临时文件 ────────────────────────────────
+震 "saved" 【坤为地卦】 存配 "/tmp/taiji_test.ini"
+兑 "saved"
+讼 "saved" == 1
+
+# ── 清配：清空内存 ────────────────────────────────────
+震 "cleared" 【坤为地卦】 清配
+兑 "cleared"
+
+# 读配应返回空
+震 "after_clear" 【坤为地卦】 读配 "server.port"
+兑 "after_clear"
+讼 "after_clear" == ""
+
+# ── 载配：从文件读回 ──────────────────────────────────
+震 "loaded" 【坤为地卦】 载配 "/tmp/taiji_test.ini"
+兑 "loaded"
+讼 "loaded" == 1
+
+# 验证读回的值
+震 "port2" 【坤为地卦】 读配 "server.port"
+兑 "port2"
+讼 "port2" == "8080"
+
+震 "host2" 【坤为地卦】 读配 "server.host"
+兑 "host2"
+讼 "host2" == "localhost"
+
+震 "dbname2" 【坤为地卦】 读配 "db.name"
+兑 "dbname2"
+讼 "dbname2" == "taiji.db"
+
+# ── 载配不存在文件 → 0 ───────────────────────────────
+震 "no_file" 【坤为地卦】 载配 "/tmp/no_such_file.ini"
+兑 "no_file"
+讼 "no_file" == 0
+
+兑 "坤卦测试通过"

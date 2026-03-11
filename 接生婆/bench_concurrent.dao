@@ -1,0 +1,15 @@
+# 基准③：4 师并发，各复 20000，真OS线程（无GIL）
+师 "w1" "bench_worker.dao"
+师 "w2" "bench_worker.dao"
+师 "w3" "bench_worker.dao"
+师 "w4" "bench_worker.dao"
+
+小畜 "results"
+复 4 {
+    震 "r" 【天火同人卦】 取 "bench渠"
+    小畜 "results" r
+}
+合
+
+震 "total" 【火天大有卦】 总 results
+兑 "total"

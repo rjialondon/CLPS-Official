@@ -1,0 +1,33 @@
+# ding_lite.dao — 极简CLPS解释器（无函数/无循环）
+# 目标：只用 乾/兑/震/艮 构造，让 jiji.dao 能编译到C。
+# 解释能力：乾(声明) / 兑(打印) / 震(算术) / 艮(条件，无否)
+# 输入文件逐行处理，每行最多一条语句。
+
+# 读源文件
+震 "g_src" 【泽天夬卦】 取位 0
+震 "g_src" 【厚土艮卦】 开卷展读 g_src
+
+# 环境字符串（name|value\n 格式）
+乾 "g_env" "" 火
+
+# 当前行
+乾 "g_line" "" 火
+乾 "g_rest" "" 火
+震 "g_rest" 【离为火卦】 拼 g_src
+
+# ── 主循环：用 艮 实现 while(g_rest != "") ──
+# 因无复/益，用条件+goto模拟暂不可行；
+# 改用"展开式"：预处理已知行数上限，用 艮 逐行判断
+# 实际：生成C时用while循环 ── 在C层实现循环
+
+# 注：ding_lite.dao 本身不能在CLPS里循环；
+# 但 jiji.dao 编译它到C后，C代码里有while，可循环。
+# 所以 ding_lite.dao 的"主循环"写成 C 内联，通过
+# 一个特殊标记让 jiji.dao 生成 while。
+#
+# 实际方案：在 jiji.dao 里添加 坎 指令支持(while loop)，
+# 然后用 坎 写 ding_lite.dao 的主循环。
+#
+# 更简单方案：直接写 ding_lite.c 手工实现。
+
+兑 "ding_lite:需要while循环支持,请用ding_lite.c"

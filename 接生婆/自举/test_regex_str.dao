@@ -1,0 +1,3 @@
+# test_regex_str.dao — 地提出的测试：含regex模式的字符串（ding.dao自身常用）
+乾 "pat" "^\"[^\"]*\"" 火
+兑 "pat"

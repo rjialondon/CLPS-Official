@@ -1,0 +1,72 @@
+# 益(42)·风雷益卦测试 — 集合操作
+# 注：集合操作用IDENT（无引号）传递列表变量
+
+# 先构造两个列表用泰卦拆分
+震 "s1" 【地天泰卦】 劈 "a,b,c,d" ","
+兑 "s1"
+
+震 "s2" 【地天泰卦】 劈 "c,d,e,f" ","
+兑 "s2"
+
+# 并集：{a,b,c,d,e,f}
+震 "uni" 【风雷益卦】 并 s1 s2
+兑 "uni"
+讼 "uni" != ""
+
+震 "u_cnt" 【风雷益卦】 个数 uni
+兑 "u_cnt"
+讼 "u_cnt" == 6
+
+# 交集：{c,d}
+震 "inter" 【风雷益卦】 交 s1 s2
+兑 "inter"
+震 "i_cnt" 【风雷益卦】 个数 inter
+兑 "i_cnt"
+讼 "i_cnt" == 2
+
+# 差集：s1-s2 = {a,b}
+震 "diff" 【风雷益卦】 差 s1 s2
+兑 "diff"
+震 "d_cnt" 【风雷益卦】 个数 diff
+兑 "d_cnt"
+讼 "d_cnt" == 2
+
+# 含：测试成员
+震 "has_c" 【风雷益卦】 含 s1 "c"
+兑 "has_c"
+讼 "has_c" == 1
+
+震 "has_e" 【风雷益卦】 含 s1 "e"
+兑 "has_e"
+讼 "has_e" == 0
+
+# 子集：inter 是 s1 的子集
+震 "sub1" 【风雷益卦】 子集 inter s1
+兑 "sub1"
+讼 "sub1" == 1
+
+# s1 不是 s2 的子集
+震 "sub2" 【风雷益卦】 子集 s1 s2
+兑 "sub2"
+讼 "sub2" == 0
+
+# 去重
+震 "dup" 【地天泰卦】 劈 "x,y,x,z,y" ","
+震 "uniq" 【风雷益卦】 去重 dup
+兑 "uniq"
+震 "q_cnt" 【风雷益卦】 个数 uniq
+兑 "q_cnt"
+讼 "q_cnt" == 3
+
+# 排序（升序）
+震 "raw" 【地天泰卦】 劈 "banana,apple,cherry" ","
+震 "sorted_asc" 【风雷益卦】 排序 raw
+兑 "sorted_asc"
+讼 "sorted_asc" != ""
+
+# 排序（降序）
+震 "sorted_desc" 【风雷益卦】 排序 raw 0
+兑 "sorted_desc"
+讼 "sorted_desc" != ""
+
+兑 "益卦测试通过"

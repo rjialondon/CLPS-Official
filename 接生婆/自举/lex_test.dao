@@ -1,0 +1,119 @@
+# lex_test.dao — 只测试ding.dao内嵌词法
+
+小畜 "g_kw表"
+小畜 "g_kw表" "乾|QIAN"
+小畜 "g_kw表" "震|ZHEN"
+小畜 "g_kw表" "兑|DUI"
+小畜 "g_kw表" "艮|GEN"
+小畜 "g_kw表" "复|FU"
+小畜 "g_kw表" "益|YI"
+小畜 "g_kw表" "否|POU"
+小畜 "g_kw表" "火|HUO_WX"
+小畜 "g_kw表" "土|TU_WX"
+小畜 "g_kw表" "金|JIN"
+
+益 "lex_查关键字" {
+    乾 "g_kw类型" "" 火
+    巽 "g_kw表" "g_kw条目" {
+        震 "g_kw分" 【离为火卦】 查找 g_kw条目 "|"
+        震 "g_kw文" 【离为火卦】 子串 g_kw条目 0 g_kw分
+        震 "g_kw候选长" 【离为火卦】 长度 g_kw候选
+        震 "g_kw文长"   【离为火卦】 长度 g_kw文
+        震 "g_kw在候" 【离为火卦】 查找 g_kw候选 g_kw文
+        艮 "g_kw在候" == 0 {
+            艮 "g_kw候选长" == g_kw文长 {
+                震 "g_kw条目长" 【离为火卦】 长度 g_kw条目
+                乾 "g_kw类型起" 0 土
+                震 "g_kw类型起" + g_kw分
+                震 "g_kw类型起" + 1
+                乾 "g_kw类型长" 0 土
+                震 "g_kw类型长" + g_kw条目长
+                震 "g_kw类型长" - g_kw类型起
+                震 "g_kw类型" 【离为火卦】 子串 g_kw条目 g_kw类型起 g_kw类型长
+            }
+        }
+    }
+}
+
+益 "lex_前进" {
+    震 "g_lex_剩余" 【离为火卦】 长度 g_rest
+    乾 "g_lex_新剩余" 0 土
+    震 "g_lex_新剩余" + g_lex_剩余
+    震 "g_lex_新剩余" - g_lex_前进量
+    震 "g_rest" 【离为火卦】 子串 g_rest g_lex_前进量 g_lex_新剩余
+}
+
+益 "lex_步" {
+    震 "g_lex_剩余" 【离为火卦】 长度 g_rest
+    艮 "g_lex_剩余" == 0 {
+        小畜 "g_tok_buf" "END|"
+        兑 "END"
+    } 否 {
+        震 "g_lex_ws" 【火雷噬嗑卦】 搜寻 "^[ \t\r]+" g_rest
+        艮 "g_lex_ws" != "" {
+            震 "g_lex_ws长" 【离为火卦】 长度 g_lex_ws
+            乾 "g_lex_前进量" 0 土
+            震 "g_lex_前进量" + g_lex_ws长
+            益 "lex_前进"
+            益 "lex_步"
+        } 否 {
+            震 "g_lex_nl" 【火雷噬嗑卦】 搜寻 "^\n" g_rest
+            艮 "g_lex_nl" != "" {
+                乾 "g_lex_前进量" 1 土
+                益 "lex_前进"
+                益 "lex_步"
+            } 否 {
+                震 "g_lex_c1" 【离为火卦】 子串 g_rest 0 1
+                艮 "g_lex_c1" == "\"" {
+                    震 "g_lex_str" 【火雷噬嗑卦】 搜寻 "^\"[^\"]*\"" g_rest
+                    艮 "g_lex_str" != "" {
+                        震 "g_lex_str长" 【离为火卦】 长度 g_lex_str
+                        乾 "g_lex_内容长" 0 土
+                        震 "g_lex_内容长" + g_lex_str长
+                        震 "g_lex_内容长" - 2
+                        震 "g_lex_内容" 【离为火卦】 子串 g_lex_str 1 g_lex_内容长
+                        震 "g_lex_tok" 【离为火卦】 拼 "STR|" g_lex_内容
+                        小畜 "g_tok_buf" g_lex_tok
+                        兑 "g_lex_tok"
+                        乾 "g_lex_前进量" 0 土
+                        震 "g_lex_前进量" + g_lex_str长
+                        益 "lex_前进"
+                        益 "lex_步"
+                    }
+                } 否 {
+                    震 "g_lex_词" 【火雷噬嗑卦】 搜寻 "^[^ \t\r\n{}\"#]+" g_rest
+                    艮 "g_lex_词" != "" {
+                        乾 "g_kw候选" "" 火
+                        震 "g_kw候选" 【离为火卦】 拼 g_lex_词
+                        益 "lex_查关键字"
+                        乾 "g_lex_词类" "IDENT" 火
+                        艮 "g_kw类型" != "" {
+                            乾 "g_lex_词类" "" 火
+                            震 "g_lex_词类" 【离为火卦】 拼 g_kw类型
+                        }
+                        震 "g_lex_词tok" 【离为火卦】 拼 g_lex_词类 "|" g_lex_词
+                        小畜 "g_tok_buf" g_lex_词tok
+                        兑 "g_lex_词tok"
+                        震 "g_lex_词长" 【离为火卦】 长度 g_lex_词
+                        乾 "g_lex_前进量" 0 土
+                        震 "g_lex_前进量" + g_lex_词长
+                        益 "lex_前进"
+                        益 "lex_步"
+                    } 否 {
+                        乾 "g_lex_前进量" 1 土
+                        益 "lex_前进"
+                        益 "lex_步"
+                    }
+                }
+            }
+        }
+    }
+}
+
+震 "g_源文件" 【泽天夬卦】 取位 0
+震 "g_源码" 【厚土艮卦】 开卷展读 g_源文件
+乾 "g_rest" "" 火
+震 "g_rest" 【离为火卦】 拼 g_源码
+小畜 "g_tok_buf"
+益 "lex_步"
+兑 "=== 词法完成 ==="

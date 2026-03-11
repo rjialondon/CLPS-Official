@@ -1,0 +1,30 @@
+# 私稿——不公开
+地·私稿.md
+天·私稿.md
+
+# 内部协同——不公开
+议事堂/
+
+# 内部草稿区
+山下客房/
+观星台/
+藏经阁/
+
+# 黄鹤楼内部操作文件
+黄鹤楼/github_setup.md
+
+# 编译产物
+*.o
+*.a
+*.dylib
+*.bak
+daocode/clpsd
+daocode/dao/clpsd
+daocode/dao/build_lib/
+daocode/dist/
+
+# Claude本地配置
+.claude/
+
+# 系统文件
+.DS_Store

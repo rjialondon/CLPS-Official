@@ -1,0 +1,1372 @@
+# ding.dao — CLPS解释器（自举第二步）
+# 鼎卦：木巽火，鼎；君子以正位凝命。
+# CLPS解释CLPS。
+#
+# 用法：clpsd 接生婆/自举/ding.dao "源文件.dao"
+# 支持：乾 / 兑 / 震(算术+模块) / 艮(if/否) / 复 / 益(函数定义/调用)
+
+# ══════════════════════════════════════════════════════
+# 一、词法（内嵌tun.dao核心，输出到g_lex_acc字符串）
+# ══════════════════════════════════════════════════════
+
+小畜 "g_kw表"
+小畜 "g_kw表" "结界|JIEJIE"
+小畜 "g_kw表" "家人|JIAREN"
+小畜 "g_kw表" "小畜|XIAO_XU"
+小畜 "g_kw表" "否|POU"
+小畜 "g_kw表" "师|SHI"
+小畜 "g_kw表" "合|HE"
+小畜 "g_kw表" "乾|QIAN"
+小畜 "g_kw表" "震|ZHEN"
+小畜 "g_kw表" "坎|KAN"
+小畜 "g_kw表" "兑|DUI"
+小畜 "g_kw表" "坤|KUN"
+小畜 "g_kw表" "离|LI"
+小畜 "g_kw表" "巽|XUN"
+小畜 "g_kw表" "艮|GEN"
+小畜 "g_kw表" "变|BIAN"
+小畜 "g_kw表" "复|FU"
+小畜 "g_kw表" "讼|SONG"
+小畜 "g_kw表" "恒|HENG"
+小畜 "g_kw表" "蹇|JIAN"
+小畜 "g_kw表" "化|HUA"
+小畜 "g_kw表" "益|YI"
+小畜 "g_kw表" "金|JIN"
+小畜 "g_kw表" "水|SHUI"
+小畜 "g_kw表" "木|MU"
+小畜 "g_kw表" "火|HUO_WX"
+小畜 "g_kw表" "土|TU_WX"
+
+# 函数表初始化（必须在所有 益 定义之前）
+小畜 "g_func_names"
+小畜 "g_func_bodies"
+
+益 "lex_查关键字" {
+    乾 "g_kw类型" "" 火
+    巽 "g_kw表" "g_kw条目" {
+        震 "g_kw分" 【离为火卦】 查找 g_kw条目 "|"
+        震 "g_kw文" 【离为火卦】 子串 g_kw条目 0 g_kw分
+        震 "g_kw候选长" 【离为火卦】 长度 g_kw候选
+        震 "g_kw文长"   【离为火卦】 长度 g_kw文
+        震 "g_kw在候" 【离为火卦】 查找 g_kw候选 g_kw文
+        艮 "g_kw在候" == 0 {
+            艮 "g_kw候选长" == g_kw文长 {
+                震 "g_kw条目长" 【离为火卦】 长度 g_kw条目
+                乾 "g_kw类型起" 0 土
+                震 "g_kw类型起" + g_kw分
+                震 "g_kw类型起" + 1
+                乾 "g_kw类型长" 0 土
+                震 "g_kw类型长" + g_kw条目长
+                震 "g_kw类型长" - g_kw类型起
+                震 "g_kw类型" 【离为火卦】 子串 g_kw条目 g_kw类型起 g_kw类型长
+            }
+        }
+    }
+}
+
+益 "lex_前进" {
+    震 "g_lex_剩余" 【离为火卦】 长度 g_rest
+    乾 "g_lex_新剩余" 0 土
+    震 "g_lex_新剩余" + g_lex_剩余
+    震 "g_lex_新剩余" - g_lex_前进量
+    震 "g_rest" 【离为火卦】 子串 g_rest g_lex_前进量 g_lex_新剩余
+}
+
+# lex_步_exec：lex_步循环体（提取为子函数，降低空迭代的跳过成本）
+益 "lex_步_exec" {
+    震 "g_lex_剩余" 【离为火卦】 长度 g_rest
+    艮 "g_lex_剩余" == 0 {
+                震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc "END|\n"
+                乾 "g_lex_done" 1 土
+            } 否 {
+                震 "g_lex_ws" 【火雷噬嗑卦】 搜寻 "^[ \t\r]+" g_rest
+                艮 "g_lex_ws" != "" {
+                    震 "g_lex_ws长" 【离为火卦】 长度 g_lex_ws
+                    乾 "g_lex_前进量" 0 土
+                    震 "g_lex_前进量" + g_lex_ws长
+                    益 "lex_前进"
+                } 否 {
+                    震 "g_lex_nl" 【火雷噬嗑卦】 搜寻 "^\n" g_rest
+                    艮 "g_lex_nl" != "" {
+                        乾 "g_lex_前进量" 1 土
+                        益 "lex_前进"
+                    } 否 {
+                        震 "g_lex_cm" 【火雷噬嗑卦】 搜寻 "^#[^\n]*" g_rest
+                        艮 "g_lex_cm" != "" {
+                            震 "g_lex_cm长" 【离为火卦】 长度 g_lex_cm
+                            乾 "g_lex_前进量" 0 土
+                            震 "g_lex_前进量" + g_lex_cm长
+                            益 "lex_前进"
+                        } 否 {
+                            震 "g_lex_c1" 【离为火卦】 子串 g_rest 0 1
+                            艮 "g_lex_c1" == "{" {
+                                震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc "LBRACE|{\n"
+                                乾 "g_lex_前进量" 1 土
+                                益 "lex_前进"
+                            } 否 {
+                                艮 "g_lex_c1" == "}" {
+                                    震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc "RBRACE|}\n"
+                                    乾 "g_lex_前进量" 1 土
+                                    益 "lex_前进"
+                                } 否 {
+                                    艮 "g_lex_c1" == "\"" {
+                                        震 "g_lex_str" 【火雷噬嗑卦】 搜寻 "^\"[^\"]*\"" g_rest
+                                        艮 "g_lex_str" != "" {
+                                            震 "g_lex_str长" 【离为火卦】 长度 g_lex_str
+                                            乾 "g_lex_内容长" 0 土
+                                            震 "g_lex_内容长" + g_lex_str长
+                                            震 "g_lex_内容长" - 2
+                                            震 "g_lex_内容" 【离为火卦】 子串 g_lex_str 1 g_lex_内容长
+                                            震 "g_lex_tok" 【离为火卦】 拼 "STR|" g_lex_内容
+                                            震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc g_lex_tok "\n"
+                                            乾 "g_lex_前进量" 0 土
+                                            震 "g_lex_前进量" + g_lex_str长
+                                            益 "lex_前进"
+                                        }
+                                    } 否 {
+                                        震 "g_lex_mod" 【火雷噬嗑卦】 搜寻 "^【(离为火卦|火雷噬嗑卦|山火贲卦|泽天夬卦|厚土艮卦|雷地豫卦)】" g_rest
+                                        艮 "g_lex_mod" != "" {
+                                            震 "g_lex_mod长" 【离为火卦】 长度 g_lex_mod
+                                            乾 "g_lex_mod内容长" 0 土
+                                            震 "g_lex_mod内容长" + g_lex_mod长
+                                            震 "g_lex_mod内容长" - 6
+                                            震 "g_lex_mod名" 【离为火卦】 子串 g_lex_mod 3 g_lex_mod内容长
+                                            震 "g_lex_mtok" 【离为火卦】 拼 "MODULE|" g_lex_mod名
+                                            震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc g_lex_mtok "\n"
+                                            乾 "g_lex_前进量" 0 土
+                                            震 "g_lex_前进量" + g_lex_mod长
+                                            益 "lex_前进"
+                                        } 否 {
+                                            震 "g_lex_di" 【火雷噬嗑卦】 搜寻 "^\\$i" g_rest
+                                            艮 "g_lex_di" != "" {
+                                                震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc "DOLLAR_I|$i\n"
+                                                乾 "g_lex_前进量" 2 土
+                                                益 "lex_前进"
+                                            } 否 {
+                                                震 "g_lex_op" 【火雷噬嗑卦】 搜寻 "^(==|!=|>=|<=|>|<|\\+|-|\\*|/|%)" g_rest
+                                                艮 "g_lex_op" != "" {
+                                                    震 "g_lex_op长" 【离为火卦】 长度 g_lex_op
+                                                    乾 "g_lex_op类" "OP" 火
+                                                    震 "g_lex_是eq"  【火雷噬嗑卦】 匹配 "^==$"  g_lex_op
+                                                    震 "g_lex_是neq" 【火雷噬嗑卦】 匹配 "^!=$"  g_lex_op
+                                                    震 "g_lex_是gte" 【火雷噬嗑卦】 匹配 "^>=$"  g_lex_op
+                                                    震 "g_lex_是lte" 【火雷噬嗑卦】 匹配 "^<=$"  g_lex_op
+                                                    震 "g_lex_是gt"  【火雷噬嗑卦】 匹配 "^>$"   g_lex_op
+                                                    震 "g_lex_是lt"  【火雷噬嗑卦】 匹配 "^<$"   g_lex_op
+                                                    震 "g_lex_是pl"  【火雷噬嗑卦】 匹配 "^\\+$" g_lex_op
+                                                    震 "g_lex_是mi"  【火雷噬嗑卦】 匹配 "^-$"   g_lex_op
+                                                    震 "g_lex_是st"  【火雷噬嗑卦】 匹配 "^\\*$" g_lex_op
+                                                    震 "g_lex_是sl"  【火雷噬嗑卦】 匹配 "^/$"   g_lex_op
+                                                    震 "g_lex_是pc"  【火雷噬嗑卦】 匹配 "^%$"   g_lex_op
+                                                    艮 "g_lex_是eq"  == 1 { 乾 "g_lex_op类" "EQ"      火 }
+                                                    艮 "g_lex_是neq" == 1 { 乾 "g_lex_op类" "NEQ"     火 }
+                                                    艮 "g_lex_是gte" == 1 { 乾 "g_lex_op类" "GTE"     火 }
+                                                    艮 "g_lex_是lte" == 1 { 乾 "g_lex_op类" "LTE"     火 }
+                                                    艮 "g_lex_是gt"  == 1 { 乾 "g_lex_op类" "GT"      火 }
+                                                    艮 "g_lex_是lt"  == 1 { 乾 "g_lex_op类" "LT"      火 }
+                                                    艮 "g_lex_是pl"  == 1 { 乾 "g_lex_op类" "PLUS"    火 }
+                                                    艮 "g_lex_是mi"  == 1 { 乾 "g_lex_op类" "MINUS"   火 }
+                                                    艮 "g_lex_是st"  == 1 { 乾 "g_lex_op类" "STAR"    火 }
+                                                    艮 "g_lex_是sl"  == 1 { 乾 "g_lex_op类" "SLASH"   火 }
+                                                    艮 "g_lex_是pc"  == 1 { 乾 "g_lex_op类" "PERCENT" 火 }
+                                                    震 "g_lex_optok" 【离为火卦】 拼 g_lex_op类 "|" g_lex_op
+                                                    震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc g_lex_optok "\n"
+                                                    乾 "g_lex_前进量" 0 土
+                                                    震 "g_lex_前进量" + g_lex_op长
+                                                    益 "lex_前进"
+                                                } 否 {
+                                                    震 "g_lex_num" 【火雷噬嗑卦】 搜寻 "^-?[0-9]+\\.?[0-9]*" g_rest
+                                                    艮 "g_lex_num" != "" {
+                                                        震 "g_lex_has点" 【火雷噬嗑卦】 匹配 "\\." g_lex_num
+                                                        乾 "g_lex_num类" "INT" 火
+                                                        艮 "g_lex_has点" == 1 { 乾 "g_lex_num类" "FLOAT" 火 }
+                                                        震 "g_lex_ntok" 【离为火卦】 拼 g_lex_num类 "|" g_lex_num
+                                                        震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc g_lex_ntok "\n"
+                                                        震 "g_lex_num长" 【离为火卦】 长度 g_lex_num
+                                                        乾 "g_lex_前进量" 0 土
+                                                        震 "g_lex_前进量" + g_lex_num长
+                                                        益 "lex_前进"
+                                                    } 否 {
+                                                        震 "g_lex_词" 【火雷噬嗑卦】 搜寻 "^[^ \t\r\n{}\"#]+" g_rest
+                                                        艮 "g_lex_词" != "" {
+                                                            乾 "g_kw候选" "" 火
+                                                            震 "g_kw候选" 【离为火卦】 拼 g_lex_词
+                                                            益 "lex_查关键字"
+                                                            乾 "g_lex_词类" "IDENT" 火
+                                                            艮 "g_kw类型" != "" {
+                                                                乾 "g_lex_词类" "" 火
+                                                                震 "g_lex_词类" 【离为火卦】 拼 g_kw类型
+                                                            }
+                                                            震 "g_lex_词tok" 【离为火卦】 拼 g_lex_词类 "|" g_lex_词
+                                                            震 "g_lex_acc" 【离为火卦】 拼 g_lex_acc g_lex_词tok "\n"
+                                                            震 "g_lex_词长" 【离为火卦】 长度 g_lex_词
+                                                            乾 "g_lex_前进量" 0 土
+                                                            震 "g_lex_前进量" + g_lex_词长
+                                                            益 "lex_前进"
+                                                        } 否 {
+                                                            乾 "g_lex_前进量" 1 土
+                                                            益 "lex_前进"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+}
+
+# lex_步：迭代版主循环（body提取为lex_步_exec，降低空迭代成本）
+# 复15000：ding.dao约1179行×8-10次lex调用≈10000，留50%余量
+益 "lex_步" {
+    乾 "g_lex_acc" "" 火
+    乾 "g_lex_done" 0 土
+    复 15000 {
+        艮 "g_lex_done" == 0 {
+            益 "lex_步_exec"
+        }
+    }
+}
+
+# ══════════════════════════════════════════════════════
+# 二、Token消耗器（字符串首行弹出法）
+# ══════════════════════════════════════════════════════
+
+# 从 g_tok_str 取出并消耗第一个token（一行）
+# 输出：g_cur_type, g_cur_text；g_tok_str 更新为剩余
+益 "消耗token" {
+    # 取第一行
+    震 "g_ct_行" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_tok_str
+    # 解析 TYPE|text
+    震 "g_ct_分" 【离为火卦】 查找 g_ct_行 "|"
+    震 "g_cur_type" 【离为火卦】 子串 g_ct_行 0 g_ct_分
+    震 "g_ct_行长" 【离为火卦】 长度 g_ct_行
+    乾 "g_ct_文起" 0 土
+    震 "g_ct_文起" + g_ct_分
+    震 "g_ct_文起" + 1
+    乾 "g_ct_文长" 0 土
+    震 "g_ct_文长" + g_ct_行长
+    震 "g_ct_文长" - g_ct_文起
+    震 "g_cur_text" 【离为火卦】 子串 g_ct_行 g_ct_文起 g_ct_文长
+    # 去掉第一行（行长 + 1换行符）
+    乾 "g_ct_跳" 0 土
+    震 "g_ct_跳" + g_ct_行长
+    震 "g_ct_跳" + 1
+    震 "g_tok_str剩余" 【离为火卦】 长度 g_tok_str
+    乾 "g_ct_新长" 0 土
+    震 "g_ct_新长" + g_tok_str剩余
+    震 "g_ct_新长" - g_ct_跳
+    艮 "g_ct_新长" > 0 {
+        震 "g_tok_str" 【离为火卦】 子串 g_tok_str g_ct_跳 g_ct_新长
+    } 否 {
+        乾 "g_tok_str" "" 火
+    }
+}
+
+# ══════════════════════════════════════════════════════
+# 三、环境（符号表，豫卦缓存·井）
+# ══════════════════════════════════════════════════════
+# 夬卦(43)·结绳→书契 + 豫卦(16)·重门击柝盖取诸豫
+# 查找：缓存取 O(1) 哈希查找（改邑不改井，无丧无得）
+# 设置：缓存存 O(1) 原地覆写（始制有名，名亦既有，知止）
+# 坤归元：不需要（hash 不膨胀，变量名有限 ~80）
+
+# 鼎卦(50)·正位凝命：每层一口鼎，井名跟着层走
+# "井"是元缓存(meta-registry)，只存g_井名指向当前活跃的鼎
+# 井卦(48)·改邑不改井：元缓存永远叫"井"，不动
+益 "查环境" {
+    震 "g_当前鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+    震 "g_查值" 【雷地豫卦】 缓存取 g_当前鼎 g_查名
+}
+
+# 设环境：存入当前鼎
+益 "设环境" {
+    震 "g_当前鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+    震 "g_设_dummy" 【雷地豫卦】 缓存存 g_当前鼎 g_设名 g_设值
+}
+
+# 截断列表：保留 ~分隔串 的前 N 项（坤·归列 interpreted 支持）
+# 输入：g_查值（当前列表值），g_kun_n（保留项数）
+# 输出：g_kun_截断结果
+益 "截断列表" {
+    乾 "g_kun_截断结果" "" 火
+    乾 "g_kun_剩余" "" 火
+    震 "g_kun_剩余" 【离为火卦】 拼 g_查值
+    乾 "g_kun_已数" 0 土
+    乾 "g_kun_done" 0 土
+    复 10000 {
+        艮 "g_kun_done" == 0 {
+            艮 "g_kun_已数" == g_kun_n {
+                乾 "g_kun_done" 1 土
+            } 否 {
+                震 "g_kun_波位" 【离为火卦】 查找 g_kun_剩余 "~"
+                艮 "g_kun_波位" >= 0 {
+                    乾 "g_kun_项长" 0 土
+                    震 "g_kun_项长" + g_kun_波位
+                    震 "g_kun_项长" + 1
+                    震 "g_kun_项" 【离为火卦】 子串 g_kun_剩余 0 g_kun_项长
+                    震 "g_kun_截断结果" 【离为火卦】 拼 g_kun_截断结果 g_kun_项
+                    震 "g_kun_已数" + 1
+                    震 "g_kun_剩余长" 【离为火卦】 长度 g_kun_剩余
+                    乾 "g_kun_新剩余长" 0 土
+                    震 "g_kun_新剩余长" + g_kun_剩余长
+                    震 "g_kun_新剩余长" - g_kun_项长
+                    艮 "g_kun_新剩余长" > 0 {
+                        震 "g_kun_剩余" 【离为火卦】 子串 g_kun_剩余 g_kun_项长 g_kun_新剩余长
+                    } 否 {
+                        乾 "g_kun_done" 1 土
+                    }
+                } 否 {
+                    乾 "g_kun_done" 1 土
+                }
+            }
+        }
+    }
+}
+
+# 拼_args_步：循环消耗后续拼接参数到 g_pla_acc
+益 "拼_args_步" {
+    乾 "g_pla_done" 0 土
+    复 100 {
+        艮 "g_pla_done" == 0 {
+            震 "g_pla_peek" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_tok_str
+            震 "g_pla_is_arg" 【火雷噬嗑卦】 匹配 "^(IDENT|STR|INT|FLOAT)" g_pla_peek
+            艮 "g_pla_is_arg" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                震 "g_pla_acc" 【离为火卦】 拼 g_pla_acc g_val_结果
+            } 否 {
+                乾 "g_pla_done" 1 土
+            }
+        }
+    }
+}
+
+# 解析值：token → 实际值（字面量直接返回，IDENT查环境）
+# 输入：g_val_type, g_val_text → 输出：g_val_结果
+益 "解析值" {
+    艮 "g_val_type" == "STR" {
+        乾 "g_val_结果" "" 火
+        震 "g_val_结果" 【离为火卦】 拼 g_val_text
+    }
+    艮 "g_val_type" == "INT" {
+        乾 "g_val_结果" "" 火
+        震 "g_val_结果" 【离为火卦】 拼 g_val_text
+    }
+    艮 "g_val_type" == "FLOAT" {
+        乾 "g_val_结果" "" 火
+        震 "g_val_结果" 【离为火卦】 拼 g_val_text
+    }
+    艮 "g_val_type" == "IDENT" {
+        乾 "g_查名" "" 火
+        震 "g_查名" 【离为火卦】 拼 g_val_text
+        益 "查环境"
+        乾 "g_val_结果" "" 火
+        震 "g_val_结果" 【离为火卦】 拼 g_查值
+    }
+    艮 "g_val_type" == "DOLLAR_I" {
+        乾 "g_val_结果" "" 火
+        震 "g_val_结果" 【离为火卦】 拼 g_loop_i
+    }
+}
+
+# ══════════════════════════════════════════════════════
+# 四、跳过块（用于false分支）
+# ══════════════════════════════════════════════════════
+
+益 "跳过块_步" {
+    乾 "g_skip_done" 0 土
+    复 5000 {
+        艮 "g_skip_done" == 0 {
+            益 "消耗token"
+            艮 "g_cur_type" == "LBRACE" { 震 "g_skip_深度" + 1 }
+            艮 "g_cur_type" == "RBRACE" { 震 "g_skip_深度" - 1 }
+            艮 "g_cur_type" == "END" { 乾 "g_skip_done" 1 土 }
+            艮 "g_skip_深度" == 0 { 乾 "g_skip_done" 1 土 }
+        }
+    }
+}
+
+益 "跳过块" {
+    # 已消耗第一个 {，跳到匹配的 }
+    乾 "g_skip_深度" 1 土
+    益 "跳过块_步"
+}
+
+# ══════════════════════════════════════════════════════
+# 五、函数表（益卦定义的子程序）
+# ══════════════════════════════════════════════════════
+# 每个函数体存为换行分隔的token字符串（与g_tok_str同格式）
+# g_func_names: 函数名列表（只追加，不重建）
+# g_func_bodies: 对应的 token 字符串（同上）
+
+乾 "g_yi_stack" "" 火
+
+# 查函数体：g_func_查名 → g_func_体（token字符串）
+# 方向B·井卦：当前鼎优先 → 母函鼎回退（每井独立，不穿透root鼎）
+益 "查函数" {
+    震 "g_fn_key" 【离为火卦】 拼 "__fn__" g_func_查名
+    # 1. 当前鼎（用户/子层函数）
+    震 "g_当前鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+    震 "g_func_体" 【雷地豫卦】 缓存取 g_当前鼎 g_fn_key
+    震 "g_fn_是虚" 【火雷噬嗑卦】 匹配 "^虚（None）" g_func_体
+    # 2. 母函鼎回退（分形安全）
+    艮 "g_fn_是虚" == 1 {
+        震 "g_fn_母鼎" 【雷地豫卦】 缓存取 "井" "g_母函鼎"
+        震 "g_fn_母虚" 【火雷噬嗑卦】 匹配 "^虚（None）" g_fn_母鼎
+        艮 "g_fn_母虚" != 1 {
+            震 "g_func_体" 【雷地豫卦】 缓存取 g_fn_母鼎 g_fn_key
+            震 "g_fn_是虚" 【火雷噬嗑卦】 匹配 "^虚（None）" g_func_体
+        }
+    }
+    艮 "g_fn_是虚" == 1 { 乾 "g_func_体" "" 火 }
+}
+
+# ══════════════════════════════════════════════════════
+# 六、收集器（函数体 / 循环体）
+# ══════════════════════════════════════════════════════
+
+# 收集复卦循环体 tokens 到 g_fu_体_str（复卦迭代版，防栈溢出）
+益 "fu_收集步" {
+    乾 "g_fu_收集_done" 0 土
+    复 5000 {
+        艮 "g_fu_收集_done" == 0 {
+            益 "消耗token"
+            艮 "g_cur_type" == "LBRACE" { 震 "g_fu_深度" + 1 }
+            艮 "g_cur_type" == "RBRACE" { 震 "g_fu_深度" - 1 }
+            艮 "g_fu_深度" == 0 {
+                乾 "g_fu_收集_done" 1 土
+            } 否 {
+                震 "g_fu_tok" 【离为火卦】 拼 g_cur_type "|" g_cur_text
+                震 "g_fu_体_str" 【离为火卦】 拼 g_fu_体_str g_fu_tok "\n"
+            }
+        }
+    }
+}
+
+# 收集益卦函数体 tokens 到 g_yi_体_str（复卦迭代版，防栈溢出）
+益 "yi_收集步" {
+    乾 "g_yi_收集_done" 0 土
+    复 5000 {
+        艮 "g_yi_收集_done" == 0 {
+            益 "消耗token"
+            艮 "g_cur_type" == "LBRACE" { 震 "g_yi_深度" + 1 }
+            艮 "g_cur_type" == "RBRACE" { 震 "g_yi_深度" - 1 }
+            艮 "g_yi_深度" == 0 {
+                乾 "g_yi_收集_done" 1 土
+            } 否 {
+                震 "g_yi_tok" 【离为火卦】 拼 g_cur_type "|" g_cur_text
+                震 "g_yi_体_str" 【离为火卦】 拼 g_yi_体_str g_yi_tok "\n"
+            }
+        }
+    }
+}
+
+# 收集巽卦循环体 tokens 到 g_xun_体_str（复卦迭代版，防栈溢出）
+益 "xun_收集步" {
+    乾 "g_xun_收集_done" 0 土
+    复 5000 {
+        艮 "g_xun_收集_done" == 0 {
+            益 "消耗token"
+            艮 "g_cur_type" == "LBRACE" { 震 "g_xun_深度" + 1 }
+            艮 "g_cur_type" == "RBRACE" { 震 "g_xun_深度" - 1 }
+            艮 "g_xun_深度" == 0 {
+                乾 "g_xun_收集_done" 1 土
+            } 否 {
+                震 "g_xun_tok" 【离为火卦】 拼 g_cur_type "|" g_cur_text
+                震 "g_xun_体_str" 【离为火卦】 拼 g_xun_体_str g_xun_tok "\n"
+            }
+        }
+    }
+}
+
+# xun_步：逐项迭代列表（~分隔），执行体
+益 "xun_步" {
+    乾 "g_xun_done" 0 土
+    复 5000 {
+        艮 "g_xun_done" == 0 {
+            震 "g_xun_空" 【火雷噬嗑卦】 匹配 "^$" g_xun_列表
+            艮 "g_xun_空" != 1 {
+                # 取第一项（到第一个 ~）
+                震 "g_xun_当前长" 【离为火卦】 查找 g_xun_列表 "~"
+                震 "g_xun_当前" 【离为火卦】 子串 g_xun_列表 0 g_xun_当前长
+                # 剩余列表
+                震 "g_xun_总长" 【离为火卦】 长度 g_xun_列表
+                乾 "g_xun_剩起" 0 土
+                震 "g_xun_剩起" + g_xun_当前长
+                震 "g_xun_剩起" + 1
+                乾 "g_xun_剩长" 0 土
+                震 "g_xun_剩长" + g_xun_总长
+                震 "g_xun_剩长" - g_xun_剩起
+                艮 "g_xun_剩长" > 0 {
+                    震 "g_xun_列表" 【离为火卦】 子串 g_xun_列表 g_xun_剩起 g_xun_剩长
+                } 否 {
+                    乾 "g_xun_列表" "" 火
+                }
+                # 设迭代变量
+                乾 "g_设名" "" 火
+                震 "g_设名" 【离为火卦】 拼 g_xun_变
+                乾 "g_设值" "" 火
+                震 "g_设值" 【离为火卦】 拼 g_xun_当前
+                益 "设环境"
+                # 执行体：同鼎调循环体，直接设g_tok_str，不碰__tok__缓存
+                乾 "g_xun_保存" "" 火
+                震 "g_xun_保存" 【离为火卦】 拼 g_tok_str
+                乾 "g_tok_str" "" 火
+                震 "g_tok_str" 【离为火卦】 拼 g_xun_体_str "END|\n"
+                乾 "g_exec_use_cache" 0 土
+                益 "执行程序"
+                乾 "g_exec_done" 0 土
+                乾 "g_tok_str" "" 火
+                震 "g_tok_str" 【离为火卦】 拼 g_xun_保存
+            } 否 {
+                乾 "g_xun_done" 1 土
+            }
+        }
+    }
+}
+
+# ══════════════════════════════════════════════════════
+# 七、执行程序（核心）
+# ══════════════════════════════════════════════════════
+
+# 执行一条语句（g_cur_type/g_cur_text已就绪）
+益 "执行语句" {
+
+    # ── 乾：变量赋值 ──
+    艮 "g_cur_type" == "QIAN" {
+        益 "消耗token"  # 变量名 (STR)
+        乾 "g_乾_名" "" 火
+        震 "g_乾_名" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # 值
+        乾 "g_val_type" "" 火
+        震 "g_val_type" 【离为火卦】 拼 g_cur_type
+        乾 "g_val_text" "" 火
+        震 "g_val_text" 【离为火卦】 拼 g_cur_text
+        益 "解析值"
+        益 "消耗token"  # 五行（忽略）
+        乾 "g_设名" "" 火
+        震 "g_设名" 【离为火卦】 拼 g_乾_名
+        乾 "g_设值" "" 火
+        震 "g_设值" 【离为火卦】 拼 g_val_结果
+        益 "设环境"
+    }
+
+    # ── 兑：打印 ──
+    艮 "g_cur_type" == "DUI" {
+        益 "消耗token"  # 变量名或字面量
+        乾 "g_查名" "" 火
+        震 "g_查名" 【离为火卦】 拼 g_cur_text
+        益 "查环境"
+        # 缓存取对不存在的key返回null，拼后显示为"虚（None）"
+        # 用此sentinel区分「变量未找到」和「变量有值」
+        震 "g_兑_str" 【离为火卦】 拼 g_查值
+        震 "g_兑_是虚" 【火雷噬嗑卦】 匹配 "^虚（None）" g_兑_str
+        艮 "g_兑_是虚" == 1 {
+            兑 "g_cur_text"
+        } 否 {
+            艮 "g_兑_str" != "" {
+                兑 "g_查值"
+            } 否 {
+                兑 "g_cur_text"
+            }
+        }
+    }
+
+    # ── 震：算术 or 模块调用 ──
+    艮 "g_cur_type" == "ZHEN" {
+        益 "消耗token"  # 目标变量名 (STR)
+        乾 "g_震_名" "" 火
+        震 "g_震_名" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # 运算符 or 【模块】
+        艮 "g_cur_type" == "MODULE" {
+            乾 "g_震_模块" "" 火
+            震 "g_震_模块" 【离为火卦】 拼 g_cur_text
+            益 "消耗token"  # 函数名
+            乾 "g_震_func" "" 火
+            震 "g_震_func" 【离为火卦】 拼 g_cur_text
+            # 提前判断函数类型
+            震 "g_mod_是拼"   【火雷噬嗑卦】 匹配 "^拼$"     g_震_func
+            震 "g_mod_是子串" 【火雷噬嗑卦】 匹配 "^子串$"   g_震_func
+            震 "g_mod_是查找" 【火雷噬嗑卦】 匹配 "^查找$"   g_震_func
+            震 "g_mod_是搜寻" 【火雷噬嗑卦】 匹配 "^搜寻$"   g_震_func
+            震 "g_mod_是匹配" 【火雷噬嗑卦】 匹配 "^匹配$"   g_震_func
+            震 "g_mod_是长度" 【火雷噬嗑卦】 匹配 "^长度$"   g_震_func
+            震 "g_mod_是转文" 【火雷噬嗑卦】 匹配 "^转文$"   g_震_func
+            震 "g_mod_是反序" 【火雷噬嗑卦】 匹配 "^反序列化$" g_震_func
+            震 "g_mod_是序"   【火雷噬嗑卦】 匹配 "^序列化$" g_震_func
+            震 "g_mod_是大写" 【火雷噬嗑卦】 匹配 "^大写$"   g_震_func
+            震 "g_mod_是小写" 【火雷噬嗑卦】 匹配 "^小写$"   g_震_func
+            震 "g_mod_是取位" 【火雷噬嗑卦】 匹配 "^取位$"   g_震_func
+            震 "g_mod_是读"   【火雷噬嗑卦】 匹配 "^开卷展读$" g_震_func
+            震 "g_mod_是缓存存" 【火雷噬嗑卦】 匹配 "^缓存存$" g_震_func
+            震 "g_mod_是缓存取" 【火雷噬嗑卦】 匹配 "^缓存取$" g_震_func
+            # 消耗第一个参数
+            益 "消耗token"
+            乾 "g_val_type" "" 火
+            震 "g_val_type" 【离为火卦】 拼 g_cur_type
+            乾 "g_val_text" "" 火
+            震 "g_val_text" 【离为火卦】 拼 g_cur_text
+            益 "解析值"
+            乾 "g_震_arg1" "" 火
+            震 "g_震_arg1" 【离为火卦】 拼 g_val_结果
+            # 执行
+            乾 "g_震_结果" "" 火
+            # ── 拼（变参） ──
+            艮 "g_mod_是拼" == 1 {
+                乾 "g_pla_acc" "" 火
+                震 "g_pla_acc" 【离为火卦】 拼 g_震_arg1
+                益 "拼_args_步"
+                震 "g_震_结果" 【离为火卦】 拼 g_pla_acc
+            }
+            # ── 子串(3参) ──
+            艮 "g_mod_是子串" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_sub_s" "" 火
+                震 "g_sub_s" 【离为火卦】 拼 g_val_结果
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_sub_l" "" 火
+                震 "g_sub_l" 【离为火卦】 拼 g_val_结果
+                震 "g_sub_s_n" 【山火贲卦】 反序列化 g_sub_s
+                震 "g_sub_l_n" 【山火贲卦】 反序列化 g_sub_l
+                震 "g_震_结果" 【离为火卦】 子串 g_震_arg1 g_sub_s_n g_sub_l_n
+            }
+            # ── 查找(2参) ──
+            艮 "g_mod_是查找" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_find_p" "" 火
+                震 "g_find_p" 【离为火卦】 拼 g_val_结果
+                震 "g_震_结果" 【离为火卦】 查找 g_震_arg1 g_find_p
+                震 "g_震_结果" 【离为火卦】 转文 g_震_结果
+            }
+            # ── 搜寻(2参：pattern str) ──
+            艮 "g_mod_是搜寻" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_re_str" "" 火
+                震 "g_re_str" 【离为火卦】 拼 g_val_结果
+                震 "g_震_结果" 【火雷噬嗑卦】 搜寻 g_震_arg1 g_re_str
+            }
+            # ── 匹配(2参：pattern str) ──
+            艮 "g_mod_是匹配" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_re_str" "" 火
+                震 "g_re_str" 【离为火卦】 拼 g_val_结果
+                震 "g_震_结果" 【火雷噬嗑卦】 匹配 g_震_arg1 g_re_str
+                震 "g_震_结果" 【离为火卦】 转文 g_震_结果
+            }
+            # ── 长度(1参) ──
+            艮 "g_mod_是长度" == 1 {
+                震 "g_震_结果" 【离为火卦】 长度 g_震_arg1
+                震 "g_震_结果" 【离为火卦】 转文 g_震_结果
+            }
+            # ── 转文(1参) ──
+            艮 "g_mod_是转文" == 1 {
+                震 "g_震_结果" 【离为火卦】 转文 g_震_arg1
+            }
+            # ── 反序列化(1参) → 转回字符串存储 ──
+            艮 "g_mod_是反序" == 1 {
+                震 "g_反_数" 【山火贲卦】 反序列化 g_震_arg1
+                震 "g_震_结果" 【离为火卦】 转文 g_反_数
+            }
+            # ── 序列化(1参) ──
+            艮 "g_mod_是序" == 1 {
+                震 "g_震_结果" 【山火贲卦】 序列化 g_震_arg1
+            }
+            # ── 大写/小写 ──
+            艮 "g_mod_是大写" == 1 {
+                震 "g_震_结果" 【离为火卦】 大写 g_震_arg1
+            }
+            艮 "g_mod_是小写" == 1 {
+                震 "g_震_结果" 【离为火卦】 小写 g_震_arg1
+            }
+            # ── 取位(以鼎名算深度，不硬编码偏移) ──
+            # 人·润章方案：鼎→0, 鼎_子→1, 鼎_子_子→2
+            # "鼎"=3字节, 每个"_子"=4字节, depth=(len-3)/4
+            艮 "g_mod_是取位" == 1 {
+                震 "g_qw_n" 【山火贲卦】 反序列化 g_震_arg1
+                震 "g_qw_鼎名" 【雷地豫卦】 缓存取 "井" "g_井名"
+                震 "g_qw_len" 【离为火卦】 长度 g_qw_鼎名
+                乾 "g_qw_depth" 0 土
+                震 "g_qw_len" - 3
+                复 20 {
+                    艮 "g_qw_len" > 0 {
+                        震 "g_qw_depth" + 1
+                        震 "g_qw_len" - 4
+                    }
+                }
+                乾 "g_qw_off" 0 土
+                震 "g_qw_off" + g_qw_n
+                震 "g_qw_off" + g_qw_depth
+                震 "g_震_结果" 【泽天夬卦】 取位 g_qw_off
+            }
+            # ── 开卷展读(1参) ──
+            艮 "g_mod_是读" == 1 {
+                震 "g_震_结果" 【厚土艮卦】 开卷展读 g_震_arg1
+            }
+            # ── 缓存存(3参：cache key value) ── 豫卦·重门击柝盖取诸豫
+            艮 "g_mod_是缓存存" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_yu_key" "" 火
+                震 "g_yu_key" 【离为火卦】 拼 g_val_结果
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_yu_val" "" 火
+                震 "g_yu_val" 【离为火卦】 拼 g_val_结果
+                震 "g_震_结果" 【雷地豫卦】 缓存存 g_震_arg1 g_yu_key g_yu_val
+            }
+            # ── 缓存取(2参：cache key) ──
+            艮 "g_mod_是缓存取" == 1 {
+                益 "消耗token"
+                乾 "g_val_type" "" 火
+                震 "g_val_type" 【离为火卦】 拼 g_cur_type
+                乾 "g_val_text" "" 火
+                震 "g_val_text" 【离为火卦】 拼 g_cur_text
+                益 "解析值"
+                乾 "g_yu_key" "" 火
+                震 "g_yu_key" 【离为火卦】 拼 g_val_结果
+                震 "g_震_结果" 【雷地豫卦】 缓存取 g_震_arg1 g_yu_key
+            }
+            乾 "g_设名" "" 火
+            震 "g_设名" 【离为火卦】 拼 g_震_名
+            乾 "g_设值" "" 火
+            震 "g_设值" 【离为火卦】 拼 g_震_结果
+            益 "设环境"
+        } 否 {
+            # 算术
+            乾 "g_震_op" "" 火
+            震 "g_震_op" 【离为火卦】 拼 g_cur_type
+            益 "消耗token"
+            乾 "g_val_type" "" 火
+            震 "g_val_type" 【离为火卦】 拼 g_cur_type
+            乾 "g_val_text" "" 火
+            震 "g_val_text" 【离为火卦】 拼 g_cur_text
+            益 "解析值"
+            乾 "g_查名" "" 火
+            震 "g_查名" 【离为火卦】 拼 g_震_名
+            益 "查环境"
+            乾 "g_震_当前" "" 火
+            震 "g_震_当前" 【离为火卦】 拼 g_查值
+            乾 "g_震_结果" "" 火
+            震 "g_震_是plus" 【火雷噬嗑卦】 匹配 "^PLUS$"  g_震_op
+            震 "g_震_是min"  【火雷噬嗑卦】 匹配 "^MINUS$" g_震_op
+            震 "g_震_是mul"  【火雷噬嗑卦】 匹配 "^STAR$"  g_震_op
+            震 "g_震_是div"  【火雷噬嗑卦】 匹配 "^SLASH$" g_震_op
+            艮 "g_震_是plus" == 1 {
+                震 "g_震_左数" 【山火贲卦】 反序列化 g_震_当前
+                震 "g_震_右数" 【山火贲卦】 反序列化 g_val_结果
+                乾 "g_震_tmp" 0 土
+                震 "g_震_tmp" + g_震_左数
+                震 "g_震_tmp" + g_震_右数
+                震 "g_震_结果" 【离为火卦】 转文 g_震_tmp
+            }
+            艮 "g_震_是min" == 1 {
+                震 "g_震_左数" 【山火贲卦】 反序列化 g_震_当前
+                震 "g_震_右数" 【山火贲卦】 反序列化 g_val_结果
+                乾 "g_震_tmp" 0 土
+                震 "g_震_tmp" + g_震_左数
+                震 "g_震_tmp" - g_震_右数
+                震 "g_震_结果" 【离为火卦】 转文 g_震_tmp
+            }
+            艮 "g_震_是mul" == 1 {
+                震 "g_震_左数" 【山火贲卦】 反序列化 g_震_当前
+                震 "g_震_右数" 【山火贲卦】 反序列化 g_val_结果
+                乾 "g_震_tmp" 0 土
+                震 "g_震_tmp" + g_震_左数
+                震 "g_震_tmp" * g_震_右数
+                震 "g_震_结果" 【离为火卦】 转文 g_震_tmp
+            }
+            艮 "g_震_是div" == 1 {
+                震 "g_震_左数" 【山火贲卦】 反序列化 g_震_当前
+                震 "g_震_右数" 【山火贲卦】 反序列化 g_val_结果
+                乾 "g_震_tmp" 0 土
+                震 "g_震_tmp" + g_震_左数
+                震 "g_震_tmp" / g_震_右数
+                震 "g_震_结果" 【离为火卦】 转文 g_震_tmp
+            }
+            乾 "g_设名" "" 火
+            震 "g_设名" 【离为火卦】 拼 g_震_名
+            乾 "g_设值" "" 火
+            震 "g_设值" 【离为火卦】 拼 g_震_结果
+            益 "设环境"
+        }
+    }
+
+    # ── 艮：条件分支 ──
+    艮 "g_cur_type" == "GEN" {
+        益 "消耗token"  # 变量名
+        乾 "g_gen_名" "" 火
+        震 "g_gen_名" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # 比较运算符
+        乾 "g_gen_op" "" 火
+        震 "g_gen_op" 【离为火卦】 拼 g_cur_type
+        益 "消耗token"  # 右值
+        乾 "g_val_type" "" 火
+        震 "g_val_type" 【离为火卦】 拼 g_cur_type
+        乾 "g_val_text" "" 火
+        震 "g_val_text" 【离为火卦】 拼 g_cur_text
+        益 "解析值"
+        乾 "g_gen_右" "" 火
+        震 "g_gen_右" 【离为火卦】 拼 g_val_结果
+        # 查左值
+        乾 "g_查名" "" 火
+        震 "g_查名" 【离为火卦】 拼 g_gen_名
+        益 "查环境"
+        乾 "g_gen_左" "" 火
+        震 "g_gen_左" 【离为火卦】 拼 g_查值
+        # 比较
+        乾 "g_gen_真" 0 土
+        震 "g_gen_是eq"  【火雷噬嗑卦】 匹配 "^EQ$"  g_gen_op
+        震 "g_gen_是neq" 【火雷噬嗑卦】 匹配 "^NEQ$" g_gen_op
+        震 "g_gen_是gt"  【火雷噬嗑卦】 匹配 "^GT$"  g_gen_op
+        震 "g_gen_是lt"  【火雷噬嗑卦】 匹配 "^LT$"  g_gen_op
+        震 "g_gen_是gte" 【火雷噬嗑卦】 匹配 "^GTE$" g_gen_op
+        震 "g_gen_是lte" 【火雷噬嗑卦】 匹配 "^LTE$" g_gen_op
+        艮 "g_gen_是eq" == 1 {
+            震 "g_gen_str等" 【火雷噬嗑卦】 搜寻 g_gen_左 g_gen_右
+            震 "g_gen_左长" 【离为火卦】 长度 g_gen_左
+            震 "g_gen_右长" 【离为火卦】 长度 g_gen_右
+            艮 "g_gen_左长" == g_gen_右长 {
+                艮 "g_gen_str等" != "" {
+                    乾 "g_gen_真" 1 土
+                }
+                艮 "g_gen_左" == "" {
+                    艮 "g_gen_右" == "" {
+                        乾 "g_gen_真" 1 土
+                    }
+                }
+            }
+        }
+        艮 "g_gen_是neq" == 1 {
+            乾 "g_gen_真" 1 土
+            震 "g_gen_str等" 【火雷噬嗑卦】 搜寻 g_gen_左 g_gen_右
+            震 "g_gen_左长" 【离为火卦】 长度 g_gen_左
+            震 "g_gen_右长" 【离为火卦】 长度 g_gen_右
+            艮 "g_gen_左长" == g_gen_右长 {
+                艮 "g_gen_str等" != "" {
+                    乾 "g_gen_真" 0 土
+                }
+                艮 "g_gen_左" == "" {
+                    艮 "g_gen_右" == "" {
+                        乾 "g_gen_真" 0 土
+                    }
+                }
+            }
+        }
+        艮 "g_gen_是gt" == 1 {
+            震 "g_gen_左数" 【山火贲卦】 反序列化 g_gen_左
+            震 "g_gen_右数" 【山火贲卦】 反序列化 g_gen_右
+            乾 "g_gen_diff" 0 土
+            震 "g_gen_diff" + g_gen_左数
+            震 "g_gen_diff" - g_gen_右数
+            艮 "g_gen_diff" > 0 { 乾 "g_gen_真" 1 土 }
+        }
+        艮 "g_gen_是lt" == 1 {
+            震 "g_gen_左数" 【山火贲卦】 反序列化 g_gen_左
+            震 "g_gen_右数" 【山火贲卦】 反序列化 g_gen_右
+            乾 "g_gen_diff" 0 土
+            震 "g_gen_diff" + g_gen_右数
+            震 "g_gen_diff" - g_gen_左数
+            艮 "g_gen_diff" > 0 { 乾 "g_gen_真" 1 土 }
+        }
+        艮 "g_gen_是gte" == 1 {
+            震 "g_gen_左数" 【山火贲卦】 反序列化 g_gen_左
+            震 "g_gen_右数" 【山火贲卦】 反序列化 g_gen_右
+            乾 "g_gen_diff" 0 土
+            震 "g_gen_diff" + g_gen_左数
+            震 "g_gen_diff" - g_gen_右数
+            艮 "g_gen_diff" > 0 { 乾 "g_gen_真" 1 土 }
+            艮 "g_gen_diff" == 0 { 乾 "g_gen_真" 1 土 }
+        }
+        艮 "g_gen_是lte" == 1 {
+            震 "g_gen_左数" 【山火贲卦】 反序列化 g_gen_左
+            震 "g_gen_右数" 【山火贲卦】 反序列化 g_gen_右
+            乾 "g_gen_diff" 0 土
+            震 "g_gen_diff" + g_gen_右数
+            震 "g_gen_diff" - g_gen_左数
+            艮 "g_gen_diff" > 0 { 乾 "g_gen_真" 1 土 }
+            艮 "g_gen_diff" == 0 { 乾 "g_gen_真" 1 土 }
+        }
+        # 消耗 {
+        益 "消耗token"
+        艮 "g_gen_真" == 1 {
+            益 "执行块"
+            # 偷看下一token，若是POU(否)则消耗并跳过else块
+            震 "g_gen_偷看" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_tok_str
+            震 "g_gen_有否" 【火雷噬嗑卦】 匹配 "^POU" g_gen_偷看
+            艮 "g_gen_有否" == 1 {
+                益 "消耗token"  # 消耗 POU
+                益 "消耗token"  # 消耗 {
+                益 "跳过块"
+            }
+        } 否 {
+            益 "跳过块"
+            # 偷看下一token，若是POU(否)则消耗并执行else块
+            震 "g_gen_偷看" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_tok_str
+            震 "g_gen_有否" 【火雷噬嗑卦】 匹配 "^POU" g_gen_偷看
+            艮 "g_gen_有否" == 1 {
+                益 "消耗token"  # 消耗 POU
+                益 "消耗token"  # 消耗 {
+                益 "执行块"
+            }
+        }
+    }
+
+    # ── 复：循环 ──
+    艮 "g_cur_type" == "FU" {
+        益 "消耗token"  # 循环次数
+        乾 "g_val_type" "" 火
+        震 "g_val_type" 【离为火卦】 拼 g_cur_type
+        乾 "g_val_text" "" 火
+        震 "g_val_text" 【离为火卦】 拼 g_cur_text
+        益 "解析值"
+        震 "g_fu_次数" 【山火贲卦】 反序列化 g_val_结果
+        # 消耗 {，收集循环体
+        益 "消耗token"
+        乾 "g_fu_体_str" "" 火
+        乾 "g_fu_深度" 1 土
+        益 "fu_收集步"
+        # 执行 g_fu_次数 次（native 复）
+        复 g_fu_次数 {
+            乾 "g_loop_i" 0 金
+            震 "g_loop_i" + $i
+            # 保存当前 tok_str，用体_str替换执行
+            乾 "g_fu_保存" "" 火
+            震 "g_fu_保存" 【离为火卦】 拼 g_tok_str
+            # 同鼎调循环体：直接设g_tok_str，不碰__tok__缓存
+            乾 "g_tok_str" "" 火
+            震 "g_tok_str" 【离为火卦】 拼 g_fu_体_str "END|\n"
+            乾 "g_exec_use_cache" 0 土
+            益 "执行程序"
+            乾 "g_exec_done" 0 土
+            乾 "g_tok_str" "" 火
+            震 "g_tok_str" 【离为火卦】 拼 g_fu_保存
+        }
+    }
+
+    # ── 小畜：列表创建 / 追加 ──
+    # 列表存储：豫卦缓存·井 中 key="__list__name", value="item1~item2~..."
+    艮 "g_cur_type" == "XIAO_XU" {
+        益 "消耗token"  # 列表名 (STR)
+        乾 "g_xu_名" "" 火
+        震 "g_xu_名" 【离为火卦】 拼 g_cur_text
+        乾 "g_xu_键" "" 火
+        震 "g_xu_键" 【离为火卦】 拼 "__list__" g_xu_名
+        # 偷看下一token类型：是否有追加值
+        震 "g_xu_下一行" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_tok_str
+        震 "g_xu_是值" 【火雷噬嗑卦】 匹配 "^(STR|IDENT|INT|FLOAT)" g_xu_下一行
+        艮 "g_xu_是值" == 1 {
+            益 "消耗token"
+            乾 "g_val_type" "" 火
+            震 "g_val_type" 【离为火卦】 拼 g_cur_type
+            乾 "g_val_text" "" 火
+            震 "g_val_text" 【离为火卦】 拼 g_cur_text
+            益 "解析值"
+            乾 "g_查名" "" 火
+            震 "g_查名" 【离为火卦】 拼 g_xu_键
+            益 "查环境"
+            乾 "g_设名" "" 火
+            震 "g_设名" 【离为火卦】 拼 g_xu_键
+            乾 "g_设值" "" 火
+            震 "g_设值" 【离为火卦】 拼 g_查值 g_val_结果 "~"
+            益 "设环境"
+        } 否 {
+            乾 "g_设名" "" 火
+            震 "g_设名" 【离为火卦】 拼 g_xu_键
+            乾 "g_设值" "" 火
+            益 "设环境"
+        }
+    }
+
+    # ── 巽：列表迭代 ──
+    艮 "g_cur_type" == "XUN" {
+        益 "消耗token"  # 列表名 (STR)
+        乾 "g_xun_列" "" 火
+        震 "g_xun_列" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # 迭代变量名 (STR)
+        乾 "g_xun_变" "" 火
+        震 "g_xun_变" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # {
+        乾 "g_xun_体_str" "" 火
+        乾 "g_xun_深度" 1 土
+        益 "xun_收集步"
+        # 读列表
+        乾 "g_xu_键" "" 火
+        震 "g_xu_键" 【离为火卦】 拼 "__list__" g_xun_列
+        乾 "g_查名" "" 火
+        震 "g_查名" 【离为火卦】 拼 g_xu_键
+        益 "查环境"
+        乾 "g_xun_列表" "" 火
+        震 "g_xun_列表" 【离为火卦】 拼 g_查值
+        益 "xun_步"
+    }
+
+    # ── 坤：归元 / 归列 ──
+    艮 "g_cur_type" == "KUN" {
+        # 偷看：是否有列表名参数（坤 "列表名" N）
+        震 "g_kun_下一行" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_tok_str
+        震 "g_kun_是列" 【火雷噬嗑卦】 匹配 "^STR" g_kun_下一行
+        艮 "g_kun_是列" == 1 {
+            益 "消耗token"  # 列表名
+            乾 "g_kun_列名" "" 火
+            震 "g_kun_列名" 【离为火卦】 拼 g_cur_text
+            益 "消耗token"  # 截断数 N
+            乾 "g_val_type" "" 火
+            震 "g_val_type" 【离为火卦】 拼 g_cur_type
+            乾 "g_val_text" "" 火
+            震 "g_val_text" 【离为火卦】 拼 g_cur_text
+            益 "解析值"
+            震 "g_kun_n" 【山火贲卦】 反序列化 g_val_结果
+            # 截断 __list__name 的 ~ 分隔串到前 N 项
+            乾 "g_xu_键" "" 火
+            震 "g_xu_键" 【离为火卦】 拼 "__list__" g_kun_列名
+            乾 "g_查名" "" 火
+            震 "g_查名" 【离为火卦】 拼 g_xu_键
+            益 "查环境"
+            益 "截断列表"
+            乾 "g_设名" "" 火
+            震 "g_设名" 【离为火卦】 拼 g_xu_键
+            乾 "g_设值" "" 火
+            震 "g_设值" 【离为火卦】 拼 g_kun_截断结果
+            益 "设环境"
+        }
+    }
+
+    # ── 益：函数定义 or 调用 ──
+    艮 "g_cur_type" == "YI" {
+        益 "消耗token"  # 函数名 (STR)
+        乾 "g_yi_名" "" 火
+        震 "g_yi_名" 【离为火卦】 拼 g_cur_text
+        # 偷看下一个token的类型（从g_tok_str取第一行前7字符）
+        乾 "g_yi_下一" "" 火
+        震 "g_yi_下一" 【离为火卦】 子串 g_tok_str 0 6
+        震 "g_yi_是定义" 【火雷噬嗑卦】 匹配 "^LBRACE" g_yi_下一
+        艮 "g_yi_是定义" == 1 {
+            # 定义：收集函数体到 g_yi_体_str
+            益 "消耗token"  # 消耗 {
+            乾 "g_yi_体_str" "" 火
+            乾 "g_yi_深度" 1 土
+            益 "yi_收集步"
+            # 存入函数鼎（完整分形：函数随鼎走）
+            震 "g_当前鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+            震 "g_fn_key" 【离为火卦】 拼 "__fn__" g_yi_名
+            震 "g_fn_tmp" 【雷地豫卦】 缓存存 g_当前鼎 g_fn_key g_yi_体_str
+        } 否 {
+            # 调用：查函数体并执行
+            乾 "g_func_查名" "" 火
+            震 "g_func_查名" 【离为火卦】 拼 g_yi_名
+            益 "查函数"
+            艮 "g_func_体" != "" {
+                # 保存当前tok_str到栈（序列化避免换行歧义）
+                震 "g_yi_frame" 【山火贲卦】 序列化 g_tok_str
+                震 "g_yi_stack" 【离为火卦】 拼 g_yi_frame "\n" g_yi_stack
+                # 同鼎调函数：直接设g_tok_str，不碰__tok__缓存
+                乾 "g_tok_str" "" 火
+                震 "g_tok_str" 【离为火卦】 拼 g_func_体 "END|\n"
+                乾 "g_exec_use_cache" 0 土
+                # Stage 2：不做坤归元，函数间共享环境状态
+                益 "执行程序"
+                乾 "g_exec_done" 0 土
+                # 从栈顶弹出（取首行，删首行，反序列化）
+                震 "g_yi_frame" 【火雷噬嗑卦】 搜寻 "^[^\n]*" g_yi_stack
+                震 "g_yi_frame_len" 【离为火卦】 长度 g_yi_frame
+                震 "g_yi_stack_len" 【离为火卦】 长度 g_yi_stack
+                乾 "g_yi_rest_start" 0 土
+                震 "g_yi_rest_start" + g_yi_frame_len
+                震 "g_yi_rest_start" + 1
+                乾 "g_yi_rest_len" 0 土
+                震 "g_yi_rest_len" + g_yi_stack_len
+                震 "g_yi_rest_len" - g_yi_rest_start
+                艮 "g_yi_rest_len" > 0 {
+                    震 "g_yi_stack" 【离为火卦】 子串 g_yi_stack g_yi_rest_start g_yi_rest_len
+                } 否 {
+                    乾 "g_yi_stack" "" 火
+                }
+                乾 "g_tok_str" "" 火
+                震 "g_tok_str" 【山火贲卦】 反序列化 g_yi_frame
+            }
+        }
+    }
+
+    # ── 讼：断言 ──
+    # 讼 "key" op value — 通过印验，不通过印断
+    艮 "g_cur_type" == "SONG" {
+        益 "消耗token"  # 变量名
+        乾 "g_讼_名" "" 火
+        震 "g_讼_名" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # 比较运算符
+        乾 "g_讼_op" "" 火
+        震 "g_讼_op" 【离为火卦】 拼 g_cur_type
+        益 "消耗token"  # 右值
+        乾 "g_val_type" "" 火
+        震 "g_val_type" 【离为火卦】 拼 g_cur_type
+        乾 "g_val_text" "" 火
+        震 "g_val_text" 【离为火卦】 拼 g_cur_text
+        益 "解析值"
+        乾 "g_讼_右" "" 火
+        震 "g_讼_右" 【离为火卦】 拼 g_val_结果
+        # 查左值
+        乾 "g_查名" "" 火
+        震 "g_查名" 【离为火卦】 拼 g_讼_名
+        益 "查环境"
+        乾 "g_讼_左" "" 火
+        震 "g_讼_左" 【离为火卦】 拼 g_查值
+        # 比较（复用艮逻辑）
+        乾 "g_讼_真" 0 土
+        震 "g_讼_是eq"  【火雷噬嗑卦】 匹配 "^EQ$"  g_讼_op
+        震 "g_讼_是neq" 【火雷噬嗑卦】 匹配 "^NEQ$" g_讼_op
+        震 "g_讼_是gt"  【火雷噬嗑卦】 匹配 "^GT$"  g_讼_op
+        震 "g_讼_是lt"  【火雷噬嗑卦】 匹配 "^LT$"  g_讼_op
+        震 "g_讼_是gte" 【火雷噬嗑卦】 匹配 "^GTE$" g_讼_op
+        震 "g_讼_是lte" 【火雷噬嗑卦】 匹配 "^LTE$" g_讼_op
+        艮 "g_讼_是eq" == 1 {
+            震 "g_讼_str等" 【火雷噬嗑卦】 搜寻 g_讼_左 g_讼_右
+            震 "g_讼_左长" 【离为火卦】 长度 g_讼_左
+            震 "g_讼_右长" 【离为火卦】 长度 g_讼_右
+            艮 "g_讼_左长" == g_讼_右长 {
+                艮 "g_讼_str等" != "" { 乾 "g_讼_真" 1 土 }
+                艮 "g_讼_左" == "" {
+                    艮 "g_讼_右" == "" { 乾 "g_讼_真" 1 土 }
+                }
+            }
+        }
+        艮 "g_讼_是neq" == 1 {
+            乾 "g_讼_真" 1 土
+            震 "g_讼_str等" 【火雷噬嗑卦】 搜寻 g_讼_左 g_讼_右
+            震 "g_讼_左长" 【离为火卦】 长度 g_讼_左
+            震 "g_讼_右长" 【离为火卦】 长度 g_讼_右
+            艮 "g_讼_左长" == g_讼_右长 {
+                艮 "g_讼_str等" != "" { 乾 "g_讼_真" 0 土 }
+                艮 "g_讼_左" == "" {
+                    艮 "g_讼_右" == "" { 乾 "g_讼_真" 0 土 }
+                }
+            }
+        }
+        艮 "g_讼_是gt" == 1 {
+            震 "g_讼_左数" 【山火贲卦】 反序列化 g_讼_左
+            震 "g_讼_右数" 【山火贲卦】 反序列化 g_讼_右
+            乾 "g_讼_diff" 0 土
+            震 "g_讼_diff" + g_讼_左数
+            震 "g_讼_diff" - g_讼_右数
+            艮 "g_讼_diff" > 0 { 乾 "g_讼_真" 1 土 }
+        }
+        艮 "g_讼_是lt" == 1 {
+            震 "g_讼_左数" 【山火贲卦】 反序列化 g_讼_左
+            震 "g_讼_右数" 【山火贲卦】 反序列化 g_讼_右
+            乾 "g_讼_diff" 0 土
+            震 "g_讼_diff" + g_讼_右数
+            震 "g_讼_diff" - g_讼_左数
+            艮 "g_讼_diff" > 0 { 乾 "g_讼_真" 1 土 }
+        }
+        艮 "g_讼_是gte" == 1 {
+            震 "g_讼_左数" 【山火贲卦】 反序列化 g_讼_左
+            震 "g_讼_右数" 【山火贲卦】 反序列化 g_讼_右
+            乾 "g_讼_diff" 0 土
+            震 "g_讼_diff" + g_讼_左数
+            震 "g_讼_diff" - g_讼_右数
+            艮 "g_讼_diff" > 0 { 乾 "g_讼_真" 1 土 }
+            艮 "g_讼_diff" == 0 { 乾 "g_讼_真" 1 土 }
+        }
+        艮 "g_讼_是lte" == 1 {
+            震 "g_讼_左数" 【山火贲卦】 反序列化 g_讼_左
+            震 "g_讼_右数" 【山火贲卦】 反序列化 g_讼_右
+            乾 "g_讼_diff" 0 土
+            震 "g_讼_diff" + g_讼_右数
+            震 "g_讼_diff" - g_讼_左数
+            艮 "g_讼_diff" > 0 { 乾 "g_讼_真" 1 土 }
+            艮 "g_讼_diff" == 0 { 乾 "g_讼_真" 1 土 }
+        }
+        # 输出结果
+        艮 "g_讼_真" == 1 {
+            兑 "讼·验通过"
+        } 否 {
+            兑 "讼·断失败"
+        }
+    }
+
+    # ── 家人：模块导入 ──
+    # 家人 "模块名" "文件.dao" — 读文件，子鼎内执行，存模块鼎名
+    艮 "g_cur_type" == "JIAREN" {
+        益 "消耗token"  # 模块名
+        乾 "g_jia_模块" "" 火
+        震 "g_jia_模块" 【离为火卦】 拼 g_cur_text
+        益 "消耗token"  # 文件路径
+        乾 "g_jia_路径" "" 火
+        震 "g_jia_路径" 【离为火卦】 拼 g_cur_text
+        # 读文件
+        震 "g_jia_源码" 【厚土艮卦】 开卷展读 g_jia_路径
+        # 保存当前词法/执行状态
+        乾 "g_jia_保存_rest" "" 火
+        震 "g_jia_保存_rest" 【离为火卦】 拼 g_rest
+        乾 "g_jia_保存_lex" "" 火
+        震 "g_jia_保存_lex" 【离为火卦】 拼 g_lex_acc
+        乾 "g_jia_保存_tok" "" 火
+        震 "g_jia_保存_tok" 【离为火卦】 拼 g_tok_str
+        # 词法分析模块源码
+        乾 "g_rest" "" 火
+        震 "g_rest" 【离为火卦】 拼 g_jia_源码
+        乾 "g_lex_acc" "" 火
+        乾 "g_lex_done" 0 土
+        益 "lex_步"
+        # 子鼎执行（鼎卦·正位凝命）
+        震 "g_jia_母鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+        震 "g_jia_子鼎" 【离为火卦】 拼 "模_" g_jia_模块
+        震 "g_jia_tmp" 【雷地豫卦】 缓存存 "井" "g_井名" g_jia_子鼎
+        # 方向B·井卦：存入子鼎缓存（执行程序从当前鼎取）
+        震 "g_jia_中转" 【雷地豫卦】 缓存存 g_jia_子鼎 "__tok__" g_lex_acc
+        益 "执行程序"
+        乾 "g_exec_done" 0 土
+        # 存模块鼎名供离引用
+        乾 "g_设名" "" 火
+        震 "g_设名" 【离为火卦】 拼 "__mod__" g_jia_模块
+        乾 "g_设值" "" 火
+        震 "g_设值" 【离为火卦】 拼 g_jia_子鼎
+        震 "g_jia_tmp" 【雷地豫卦】 缓存存 "井" "g_井名" g_jia_母鼎
+        益 "设环境"
+        # 坤·归元：恢复状态
+        震 "g_jia_tmp" 【雷地豫卦】 缓存存 "井" "g_井名" g_jia_母鼎
+        乾 "g_rest" "" 火
+        震 "g_rest" 【离为火卦】 拼 g_jia_保存_rest
+        乾 "g_lex_acc" "" 火
+        震 "g_lex_acc" 【离为火卦】 拼 g_jia_保存_lex
+        乾 "g_tok_str" "" 火
+        震 "g_tok_str" 【离为火卦】 拼 g_jia_保存_tok
+        兑 "家人·归"
+    }
+}
+
+# 执行块：执行 { } 内的语句序列（当前已消耗 {）
+# 复卦迭代版（原递归→迭代，消灭native栈压力）
+益 "执行块" {
+    乾 "g_eb_done" 0 土
+    复 5000 {
+        艮 "g_eb_done" == 0 {
+            益 "消耗token"
+            艮 "g_cur_type" == "RBRACE" { 乾 "g_eb_done" 1 土 }
+            艮 "g_cur_type" == "END"    { 乾 "g_eb_done" 1 土 }
+            艮 "g_eb_done" == 0 { 益 "执行语句" 乾 "g_eb_done" 0 土 }
+        }
+    }
+}
+
+# exec_步：观卦·先观后行（空即止，不依赖END标记）
+益 "exec_步" {
+    震 "g_exec_剩" 【离为火卦】 长度 g_tok_str
+    艮 "g_exec_剩" == 0 {
+        乾 "g_exec_done" 1 土
+    } 否 {
+        益 "消耗token"
+        艮 "g_cur_type" == "END" {
+            乾 "g_exec_done" 1 土
+        } 否 {
+            益 "执行语句"
+            乾 "g_exec_done" 0 土
+        }
+    }
+}
+
+# 执行程序：主循环（复卦迭代）
+# 观卦·空即止 已内嵌于 exec_步，此处复卦为根母的安全上限
+益 "执行程序" {
+    # 跨鼎调用（运行程序/家人）→ 从缓存读 __tok__
+    # 同鼎调用（YI/FU/XUN）→ 调用方已设好 g_tok_str，跳过
+    艮 "g_exec_use_cache" == 1 {
+        震 "g_exec_当前鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+        乾 "g_tok_str" "" 火
+        震 "g_tok_str" 【雷地豫卦】 缓存取 g_exec_当前鼎 "__tok__"
+    }
+    乾 "g_exec_use_cache" 1 土
+    乾 "g_exec_done" 0 土
+    复 2000 {
+        艮 "g_exec_done" == 0 {
+            益 "exec_步"
+        }
+    }
+}
+
+# 运行程序：从 g_lex_acc 读取 token 执行（鼎卦·变革容器）
+# Stage 2 安全：g_lex_acc 不受 YI CALL 的 g_tok_str save/restore 影响
+# 革卦(49)·去故取新：进子层=革，子鼎隔离母鼎
+益 "运行程序" {
+    # 保存母鼎名（坍缩时恢复）
+    震 "g_母鼎" 【雷地豫卦】 缓存取 "井" "g_井名"
+    # 存母鼎名供查函数回退（分形：子找不到的函数从母层取）
+    震 "g_中转_tmp" 【雷地豫卦】 缓存存 "井" "g_母函鼎" g_母鼎
+    # 革：创建子鼎
+    震 "g_子鼎" 【离为火卦】 拼 g_母鼎 "_子"
+    # 方向B·井卦：存入子鼎缓存（执行程序从当前鼎取）
+    震 "g_中转_tmp" 【雷地豫卦】 缓存存 g_子鼎 "__tok__" g_lex_acc
+    震 "g_井_tmp" 【雷地豫卦】 缓存存 "井" "g_井名" g_子鼎
+    益 "执行程序"
+    # 坤·归元：坍缩回母鼎
+    震 "g_井_tmp" 【雷地豫卦】 缓存存 "井" "g_井名" g_母鼎
+}
+
+# ══════════════════════════════════════════════════════
+# 八、入口
+# ══════════════════════════════════════════════════════
+
+震 "g_源文件" 【泽天夬卦】 取位 0
+兑 "g_源文件"
+震 "g_源码" 【厚土艮卦】 开卷展读 g_源文件
+
+# 词法分析 → g_lex_acc
+乾 "g_rest" "" 火
+震 "g_rest" 【离为火卦】 拼 g_源码
+益 "lex_步"
+
+# 初始化环境：鼎卦·正位凝命
+# 元缓存"井"存g_井名，指向当前层的鼎
+# 分形安全：子层不覆盖母层已设的鼎名
+震 "g_井_check" 【雷地豫卦】 缓存取 "井" "g_井名"
+震 "g_井_是虚" 【火雷噬嗑卦】 匹配 "^虚（None）" g_井_check
+艮 "g_井_是虚" == 1 {
+    震 "g_井_init" 【雷地豫卦】 缓存存 "井" "g_井名" "鼎"
+}
+乾 "g_loop_i" 0 金
+乾 "g_cur_type" "" 火
+乾 "g_cur_text" "" 火
+乾 "g_exec_use_cache" 1 土
+# 执行（运行程序：g_lex_acc → g_tok_str → 执行程序）
+益 "运行程序"

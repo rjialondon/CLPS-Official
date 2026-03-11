@@ -1,0 +1,78 @@
+# 坎(29)·习坎卦测试 — 安全防护
+# Base64编解码 + SHA-256 + HMAC-SHA256 + URL编解码
+
+# ── Base64 编解码 ─────────────────────────────────────
+
+# 已知向量："hello" → "aGVsbG8="
+震 "b64" 【习坎卦】 编码 "hello"
+兑 "b64"
+讼 "b64" == "aGVsbG8="
+
+# "Man" → "TWFu"
+震 "b64m" 【习坎卦】 编码 "Man"
+讼 "b64m" == "TWFu"
+
+# 解码复原
+震 "dec" 【习坎卦】 解码 "aGVsbG8="
+兑 "dec"
+讼 "dec" == "hello"
+
+震 "dec2" 【习坎卦】 解码 "TWFu"
+讼 "dec2" == "Man"
+
+# 空字符串 → ""
+震 "b64e" 【习坎卦】 编码 ""
+讼 "b64e" == ""
+
+# ── SHA-256 已知向量 ──────────────────────────────────
+
+# SHA-256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+震 "h空" 【习坎卦】 散列 ""
+兑 "h空"
+讼 "h空" == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+# SHA-256("abc") = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+震 "habc" 【习坎卦】 散列 "abc"
+兑 "habc"
+讼 "habc" == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+
+# SHA-256("hello") = 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+震 "hhello" 【习坎卦】 散列 "hello"
+讼 "hhello" == "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+
+# ── HMAC-SHA256 已知向量 ──────────────────────────────
+
+# HMAC-SHA256("secret", "hello") = 88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b
+震 "mac1" 【习坎卦】 签名 "secret" "hello"
+兑 "mac1"
+讼 "mac1" == "88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b"
+
+# HMAC-SHA256("key", "message") = 6e9ef29b75fffc5b7abae527d58fdadb2fe42e7219011976917343065f58ed4a
+震 "mac2" 【习坎卦】 签名 "key" "message"
+兑 "mac2"
+讼 "mac2" == "6e9ef29b75fffc5b7abae527d58fdadb2fe42e7219011976917343065f58ed4a"
+
+# ── URL 编解码 ────────────────────────────────────────
+
+# 空格编码为 %20
+震 "enc" 【习坎卦】 网址编 "hello world"
+兑 "enc"
+讼 "enc" == "hello%20world"
+
+# 特殊字符 & = ?
+震 "enc2" 【习坎卦】 网址编 "a=1&b=2"
+兑 "enc2"
+讼 "enc2" == "a%3D1%26b%3D2"
+
+# 解码复原
+震 "dec3" 【习坎卦】 网址解 "hello%20world"
+讼 "dec3" == "hello world"
+
+震 "dec4" 【习坎卦】 网址解 "a%3D1%26b%3D2"
+讼 "dec4" == "a=1&b=2"
+
+# 安全字符不编码
+震 "enc3" 【习坎卦】 网址编 "abc-_."
+讼 "enc3" == "abc-_."
+
+兑 "坎卦测试通过"

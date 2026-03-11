@@ -1,0 +1,49 @@
+# 乾(1)·乾为天卦测试 — 后台子进程管理
+
+# 获取当前进程号
+震 "self_pid" 【乾为天卦】 此进程号
+兑 "self_pid"
+讼 "self_pid" > 0
+
+# 执：捕获命令输出（含 stderr，无尾部换行）
+震 "out1" 【乾为天卦】 执 "echo hello_from_clps"
+兑 "out1"
+讼 "out1" == "hello_from_clps"
+
+# 执：多行输出（只测非空）
+震 "out2" 【乾为天卦】 执 "ls /tmp"
+兑 "out2"
+讼 "out2" != ""
+
+# 后台：启动睡眠进程（传变量值用 IDENT 不加引号）
+震 "pid1" 【乾为天卦】 后台 "sleep 2"
+兑 "pid1"
+讼 "pid1" > 0
+
+# 在：进程仍在运行 → 1
+震 "alive1" 【乾为天卦】 在 pid1
+兑 "alive1"
+讼 "alive1" == 1
+
+# 杀：发送 SIGTERM → 1=成功
+震 "killed" 【乾为天卦】 杀 pid1
+兑 "killed"
+讼 "killed" == 1
+
+# 等：收割已终止进程
+震 "exit1" 【乾为天卦】 等 pid1
+兑 "exit1"
+
+# 在：进程已结束 → 0
+震 "alive2" 【乾为天卦】 在 pid1
+兑 "alive2"
+讼 "alive2" == 0
+
+# 后台：快速结束，等待退出码 0
+震 "pid2" 【乾为天卦】 后台 "sleep 0"
+讼 "pid2" > 0
+震 "exit2" 【乾为天卦】 等 pid2
+兑 "exit2"
+讼 "exit2" == 0
+
+兑 "乾卦测试通过"

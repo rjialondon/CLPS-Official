@@ -1,0 +1,10 @@
+# 基准④：同人消息队列 2000 条，师·生产者→主线消费
+师 "生产者" "bench_producer.dao"
+
+乾 "total" 0
+复 2000 {
+    震 "msg" 【天火同人卦】 取 "bench队"
+    坎 "total" + msg
+}
+合
+兑 "total"

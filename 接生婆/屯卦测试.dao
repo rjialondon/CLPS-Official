@@ -1,0 +1,78 @@
+# 屯(3)·水雷屯卦测试 — 字节流操作
+
+# 字节获：取字节值
+震 "b0" 【水雷屯卦】 字节获 "ABC" 0
+兑 "b0"
+讼 "b0" == 65
+
+震 "b1" 【水雷屯卦】 字节获 "ABC" 2
+兑 "b1"
+讼 "b1" == 67
+
+# 越界返回-1
+震 "bx" 【水雷屯卦】 字节获 "ABC" 10
+兑 "bx"
+讼 "bx" == -1
+
+# 字节置：修改字节
+震 "mod" 【水雷屯卦】 字节置 "ABC" 0 97
+兑 "mod"
+讼 "mod" == "aBC"
+
+# 字节长：多字节字符
+震 "bl_ascii" 【水雷屯卦】 字节长 "hello"
+兑 "bl_ascii"
+讼 "bl_ascii" == 5
+
+# 字节列：转字节数组
+震 "bytes" 【水雷屯卦】 字节列 "ABC"
+兑 "bytes"
+震 "bytes_n" 【风雷益卦】 个数 bytes
+讼 "bytes_n" == 3
+
+# 列字节：字节数组转字符串（往返）
+震 "restored" 【水雷屯卦】 列字节 bytes
+兑 "restored"
+讼 "restored" == "ABC"
+
+# 零填
+震 "zeros" 【水雷屯卦】 零填 4
+震 "zeros_len" 【水雷屯卦】 字节长 zeros
+讼 "zeros_len" == 4
+
+# 变长编解码：LEB128往返
+震 "enc1" 【水雷屯卦】 可变编 300
+兑 "enc1"
+震 "dec1" 【水雷屯卦】 可变解 enc1
+兑 "dec1"
+讼 "dec1" == 300
+
+# 小值编码1字节
+震 "enc2" 【水雷屯卦】 可变编 127
+兑 "enc2"
+震 "enc2_len" 【水雷屯卦】 字节长 enc2
+讼 "enc2_len" == 1
+
+# 打包/解包：q格式(int64)
+震 "packed" 【水雷屯卦】 打包 "q" 12345678
+兑 "packed"
+震 "packed_len" 【水雷屯卦】 字节长 packed
+讼 "packed_len" == 8
+
+震 "unpacked" 【水雷屯卦】 解包 "q" packed
+兑 "unpacked"
+震 "unp_cnt" 【风雷益卦】 个数 unpacked
+讼 "unp_cnt" == 1
+
+# 打包/解包：多字段 "HH" (两个uint16)
+震 "p2" 【水雷屯卦】 打包 "HH" 1000 2000
+兑 "p2"
+震 "p2_len" 【水雷屯卦】 字节长 p2
+讼 "p2_len" == 4
+
+震 "u2" 【水雷屯卦】 解包 "HH" p2
+兑 "u2"
+震 "u2_cnt" 【风雷益卦】 个数 u2
+讼 "u2_cnt" == 2
+
+兑 "屯卦测试通过"
