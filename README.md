@@ -233,7 +233,7 @@ Convention: parameter names use `捕_` prefix to avoid shadowing outer scope var
 离 "result_a" worker_a "output"  # cross-scope reference
 ```
 
-Real `std::async` threads. Three-layer fractal verified working.
+Real `std::async` threads.
 
 ### Modules (家人 = Family — household shares resources)
 
@@ -382,56 +382,7 @@ CLPS asks one question: **is this system honest about what it is doing?**
 Any action that is honestly declared is constitutionally valid. Penetration testing, encryption, network interception, hardware control — all valid if declared. What the target system does with the honest request is the target's problem. Defense is the target's jurisdiction. Honesty is CLPS's domain.
 
 ---
-
-## Fractal Safety Model (母子鼎 — Mother-Child Cauldron)
-
-```
-Mother Core  (安全区)
-  ├── 能生: spawn child process
-  ├── 能收: receive cause-of-death
-  └── 能传: pass failure knowledge to next child
-
-Child Process  (试错区 — expendable)
-  ├── 自跑: self-run
-  ├── 自检: self-check for breach
-  └── 自死: self-terminate + report cause of death
-
-Safety reflex: CLPS cuts its own power before a breach reaches the mother.
-               Not a kill switch. A constitutional reflex.
-Evolution: each generation knows one more dead-end.
-```
-
-Verified: `分形主层.dao` → `分形中层.dao` → `分形叶甲.dao` + `分形叶乙.dao`. Three layers. Each layer knows only its direct children. Results propagate upward through assertions.
-
 ---
-
-## 丹阁 — The Global Knowledge Base
-
-*「本地炼制出来一个通用丹药，让万家灯火的 CLPS 可食，从而达到洗髓伐毛的作用。」*
-*"Refine a remedy locally. Let every CLPS instance across the world absorb it. Not a patch — a constitutional upgrade from within."*
-
-革卦(49) + 鼎卦(50) are adjacent hexagrams, read together:
-- 革 = 去故 (remove the old) — local trial, error, collapse
-- 鼎 = 取新 (take the new) — what survives is published as universal knowledge
-
-```
-child collapses (attack or unknown failure)
-       ↓
-mother reads cause-of-death
-       ↓
-local sandbox: does our defense hold?
-       ↓ yes
-public validation: is this universal?
-       ↓ yes
-written to 丹阁 — all instances absorb
-published: the armor. not published: the attack vector.
-```
-
-Traditional software: more users → larger attack surface → more danger.
-CLPS + 丹阁: more instances → more failures captured → more defenses → all safer.
-
-**Every attack is a vaccine shot.**
-
 ---
 
 ## Self-Hosting
@@ -535,7 +486,6 @@ The synonym table expansion plan: run existing dictionaries (辞海, Oxford Chin
 | Constitutional server (three laws, HTTP) | ✅ |
 | OpenClaw SKILL integration protocol | ✅ |
 | Peer handshake (同人 protocol) | ✅ |
-| Fractal process model (3-layer verified) | ✅ |
 | C static/dynamic library | ✅ |
 | Python binding (C++) | 🔨 |
 | Rust/PyO3 binding (taiji_core) | 🔨 |
@@ -543,7 +493,6 @@ The synonym table expansion plan: run existing dictionaries (辞海, Oxford Chin
 | AI query interface (山水蒙卦) | ✅ |
 | Self-hosting Stage 1 | ✅ |
 | Self-hosting Stage 2 | 🔨 |
-| 丹阁 global knowledge base | 📐 designed |
 | Classical text integration (42 texts staged) | 📐 staged |
 
 ---
